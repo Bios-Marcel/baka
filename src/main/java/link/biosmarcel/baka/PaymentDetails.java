@@ -42,7 +42,6 @@ public class PaymentDetails extends VBox {
                 disableComponents.set(true);
                 classificationsTable.setItems(FXCollections.emptyObservableList());
             } else {
-                System.out.println(newValue.payment.classifications);
                 disableComponents.set(false);
                 classificationsTable.setItems(newValue.classifications);
             }
