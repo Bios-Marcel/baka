@@ -129,7 +129,7 @@ public class EvaluationView extends Tab {
         // FIXME Add initial balance.
         BigDecimal balance = new BigDecimal("0");
         final XYChart.Series<Number, Number> balanceSeries = new XYChart.Series<>();
-        balanceData.add(balanceSeries);
+        balanceData.setAll(balanceSeries);
 
         final Collection<Payment> sorted = state.data.payments
                 .stream()
