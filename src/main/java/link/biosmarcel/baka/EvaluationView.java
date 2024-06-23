@@ -78,6 +78,8 @@ public class EvaluationView extends Tab {
                 balanceData
         );
         balanceChart.setAnimated(false);
+        // No need, as we only have one series.
+        balanceChart.setLegendVisible(false);
 
         final DatePicker startDatePicker = new DatePicker();
         startDatePicker.setValue(LocalDate
@@ -136,10 +138,10 @@ public class EvaluationView extends Tab {
                 .sorted(Comparator.comparing(a -> a.effectiveDate))
                 .toList();
         for (final var payment : sorted) {
-            if (payment.effectiveDate.isBefore(startDate.get())) {
+            if (payment.effectiveDate.isBefore(startDate.get().atStartOfDay())) {
                 continue;
             }
-            if (payment.effectiveDate.isAfter(endDate.get())) {
+            if (payment.effectiveDate.isAfter(endDate.get().atStartOfDay())) {
                 continue;
             }
 

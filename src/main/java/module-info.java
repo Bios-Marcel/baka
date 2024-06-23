@@ -5,4 +5,5 @@ module link.biosmarcel.baka {
     requires org.eclipse.store.storage.embedded.configuration;
 
     exports link.biosmarcel.baka;
+    exports link.biosmarcel.baka.bankimport;
 }

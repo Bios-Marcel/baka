@@ -18,6 +18,7 @@ public class PaymentFX {
 
     public final ObjectProperty<BigDecimal> amount = new SimpleObjectProperty<>();
     public final StringProperty reference = new SimpleStringProperty();
+    public final StringProperty name = new SimpleStringProperty();
 
     public final ObjectProperty<LocalDate> bookingDate = new SimpleObjectProperty<>();
     public final ObjectProperty<LocalDate> effectiveDate = new SimpleObjectProperty<>();
@@ -29,8 +30,9 @@ public class PaymentFX {
 
         amount.set(payment.amount);
         reference.set(payment.reference);
-        bookingDate.set(payment.bookingDate);
-        effectiveDate.set(payment.effectiveDate);
+        name.set(payment.name);
+        bookingDate.set(payment.bookingDate.toLocalDate());
+        effectiveDate.set(payment.effectiveDate.toLocalDate());
         classifications.addAll(payment.classifications);
     }
 }
