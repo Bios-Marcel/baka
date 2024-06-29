@@ -1,18 +1,23 @@
 package link.biosmarcel.baka;
 
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.scene.control.*;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
+import link.biosmarcel.baka.bankimport.DKBCSV;
 import link.biosmarcel.baka.bankimport.RevolutCSV;
 import link.biosmarcel.baka.bankimport.SparkasseCSV;
 
+import java.io.File;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.function.Function;
 
 public class PaymentsView extends Tab {
     private final State state;
@@ -55,29 +60,18 @@ public class PaymentsView extends Tab {
 
         final var menuItemSparkasseCSVCamtV8 = new MenuItem("SparkasseCAMTv8.csv");
         final var menuItemRevolutCSV = new MenuItem("Revolut.csv");
+        final var menuItemDKBCSV = new MenuItem("DKB.csv");
 
         final var importButton = new MenuButton("Import");
         importButton.getItems().addAll(
                 menuItemSparkasseCSVCamtV8,
-                menuItemRevolutCSV
+                menuItemRevolutCSV,
+                menuItemDKBCSV
         );
 
-        menuItemRevolutCSV.setOnAction(_ -> {
-            final var file = new FileChooser().showOpenDialog(getTabPane().getScene().getWindow());
-            if (file == null) {
-                return;
-            }
-
-            createPayments(RevolutCSV.parse(file));
-        });
-        menuItemSparkasseCSVCamtV8.setOnAction(_ -> {
-            final var file = new FileChooser().showOpenDialog(getTabPane().getScene().getWindow());
-            if (file == null) {
-                return;
-            }
-
-            createPayments(SparkasseCSV.parse(file));
-        });
+        menuItemRevolutCSV.setOnAction(importHandler(RevolutCSV::parse));
+        menuItemSparkasseCSVCamtV8.setOnAction(importHandler(SparkasseCSV::parse));
+        menuItemDKBCSV.setOnAction(importHandler(DKBCSV::parse));
 
         PaymentDetails details = new PaymentDetails(state);
         details.activePayment.bind(table.getSelectionModel().selectedItemProperty());
@@ -94,6 +88,17 @@ public class PaymentsView extends Tab {
         VBox.setVgrow(table, Priority.ALWAYS);
 
         setContent(layout);
+    }
+
+    private EventHandler<ActionEvent> importHandler(Function<File, List<Payment>> importer) {
+        return __ -> {
+            final var file = new FileChooser().showOpenDialog(getTabPane().getScene().getWindow());
+            if (file == null) {
+                return;
+            }
+
+            createPayments(importer.apply(file));
+        };
     }
 
     private void createPayments(Collection<Payment> newPayments) {
