@@ -59,6 +59,7 @@ public class SparkasseCSV {
                 final Payment payment = new Payment();
                 payment.name = record.get(11);
                 payment.account = record.get(12);
+                payment.identifier = record.get(7);
                 payment.amount = amount;
                 payment.reference = reference;
                 payment.bookingDate = bookingDate;
