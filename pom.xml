@@ -24,6 +24,13 @@
             <version>22-ea+11</version>
         </dependency>
 
+        <!-- Nullness annotations -->
+        <dependency>
+            <groupId>org.jspecify</groupId>
+            <artifactId>jspecify</artifactId>
+            <version>0.3.0</version>
+        </dependency>
+
         <!-- Used to read payment files -->
         <dependency>
             <groupId>org.apache.commons</groupId>
