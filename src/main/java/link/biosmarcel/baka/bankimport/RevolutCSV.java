@@ -64,13 +64,14 @@ public class RevolutCSV {
                     case "" -> bookingDate;
                     default -> LocalDateTime.parse(record.get(2), REVOLUT_DATE_FORMAT);
                 };
-                final Payment payment = new Payment();
-                // Revolut CSV doesn't supply this, we just got the reference, which is called "description"
-                payment.name = "";
-                payment.amount = amount;
-                payment.reference = reference;
-                payment.bookingDate = bookingDate;
-                payment.effectiveDate = effectiveDate;
+                final Payment payment = new Payment(
+                        amount,
+                        reference,
+                        // Revolut CSV doesn't supply a name, we just got the reference, which is called "description"
+                        "",
+                        bookingDate,
+                        effectiveDate
+                );
                 newPayments.add(payment);
             });
 

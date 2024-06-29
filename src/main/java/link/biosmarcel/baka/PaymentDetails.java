@@ -1,9 +1,6 @@
 package link.biosmarcel.baka;
 
-import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.scene.control.Button;
 import javafx.scene.control.TableColumn;
@@ -11,11 +8,13 @@ import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import org.jspecify.annotations.Nullable;
 
 import java.math.BigDecimal;
+import java.util.Objects;
 
 public class PaymentDetails extends VBox {
-    public final ObjectProperty<PaymentFX> activePayment = new SimpleObjectProperty<>();
+    public final ObjectProperty<@Nullable PaymentFX> activePayment = new SimpleObjectProperty<>();
     public final BooleanProperty disableComponents = new SimpleBooleanProperty(true);
     private final State state;
 
@@ -51,26 +50,31 @@ public class PaymentDetails extends VBox {
         final var createButton = new Button("New");
         createButton.disableProperty().bind(disableComponents);
         createButton.setOnAction(_ -> {
+            final var payment = Objects.requireNonNull(activePayment.get());
+
             final Classification newClassification = new Classification();
             newClassification.amount = new BigDecimal("5.0");
             newClassification.tag = "test";
 
-            activePayment.get().payment.classifications.add(newClassification);
-            activePayment.get().classifications.add(newClassification);
+            payment.payment.classifications.add(newClassification);
+            payment.classifications.add(newClassification);
 
-            state.storer.store(activePayment.get().payment.classifications);
+            state.storer.store(payment.payment.classifications);
             state.storer.commit();
         });
 
         final var deleteButton = new Button("Delete");
-        classificationsTable.getSelectionModel().selectedItemProperty().addListener((_, _, newValue) -> {
+        final ReadOnlyObjectProperty<@Nullable Classification> selectedClassification = classificationsTable.getSelectionModel().selectedItemProperty();
+        selectedClassification.addListener((_, _, newValue) -> {
             deleteButton.setDisable(newValue == null);
         });
         deleteButton.setOnAction(_ -> {
-            final var selected = classificationsTable.getSelectionModel().selectedItemProperty().get();
-            activePayment.get().classifications.remove(selected);
-            activePayment.get().payment.classifications.remove(selected);
-            state.storer.store(activePayment.get().payment);
+            final var selected = Objects.requireNonNull(selectedClassification.get());
+            final var payment = Objects.requireNonNull(activePayment.get());
+
+            payment.classifications.remove(selected);
+            payment.payment.classifications.remove(selected);
+            state.storer.store(payment.payment);
             state.storer.commit();
         });
 

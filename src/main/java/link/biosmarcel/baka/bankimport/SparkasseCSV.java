@@ -56,14 +56,17 @@ public class SparkasseCSV {
                     default -> LocalDate.parse(record.get(2), SPARKASSE_DATE_FORMAT).atStartOfDay();
                 };
 
-                final Payment payment = new Payment();
-                payment.name = record.get(11);
+                final Payment payment = new Payment(
+                        amount,
+                        reference,
+                        record.get(11),
+                        bookingDate,
+                        effectiveDate
+                );
+
                 payment.account = record.get(12);
                 payment.identifier = record.get(7);
-                payment.amount = amount;
-                payment.reference = reference;
-                payment.bookingDate = bookingDate;
-                payment.effectiveDate = effectiveDate;
+
                 newPayments.add(payment);
             });
 

@@ -1,0 +1,5 @@
+<root>
+    <item name='javafx.stage.FileChooser java.io.File showOpenDialog(javafx.stage.Window)'>
+        <annotation name='org.jspecify.annotations.Nullable'/>
+    </item>
+</root>

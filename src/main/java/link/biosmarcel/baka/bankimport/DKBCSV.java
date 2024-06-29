@@ -65,14 +65,17 @@ public class DKBCSV {
                 };
                 final String name = record.get(3);
 
-                final Payment payment = new Payment();
+                final Payment payment = new Payment(
+                        amount,
+                        reference,
+                        name,
+                        bookingDate.atStartOfDay(),
+                        effectiveDate.atStartOfDay()
+                );
+
                 // Revolut CSV doesn't supply this, we just got the reference, which is called "description"
-                payment.name = name;
-                payment.amount = amount;
-                payment.reference = reference;
                 payment.account = record.get(5);
-                payment.bookingDate = bookingDate.atStartOfDay();
-                payment.effectiveDate = effectiveDate.atStartOfDay();
+
                 newPayments.add(payment);
             });
 

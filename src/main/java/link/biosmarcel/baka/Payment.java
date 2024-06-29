@@ -28,6 +28,20 @@ public class Payment {
 
     public List<Classification> classifications = new ArrayList<>();
 
+    public Payment(
+            final BigDecimal amount,
+            final String reference,
+            final String name,
+            final LocalDateTime bookingDate,
+            final LocalDateTime effectiveDate
+    ) {
+        this.amount = amount;
+        this.reference = reference;
+        this.name = name;
+        this.bookingDate = bookingDate;
+        this.effectiveDate = effectiveDate;
+    }
+
     /**
      * This method is deliberately not called `equals`, since it can't for sure say whether Payments are the same.
      * For example, if you send the same amount to the same person twice on the same day, your bank data export
