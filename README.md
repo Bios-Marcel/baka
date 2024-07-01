@@ -1,17 +1,27 @@
 A simple visualisation tool for personal finances.
 Merge different bank accounts histories together, classify payments and do predictions.
 
+## Concept
+
+This application DOES NOT connect to your bank or your bank account in any way. No data is sent anywhere.
+It uses Export-Formats offered by your bank. Currently, there are a couple of hard-coded ones that I am using for test
+purposes. The plan is to have a configurable CSV importer, as most banks seem to offer CSV exporting.
+
+Some banks, for example Revolut however, only offer a detailed export using PDF.
+These can't be parsed and probably won't ever be supported. Just switch to a better bank ;)
+
 ## Requirements
 
+* Windows 10+ (For now)
 * Maven
 * OpenJDK 22
 * https://github.com/wixtoolset/wix3/releases
 
 ## Data Storage
 
-Currently this is hardcoded for Windows only and uses `$env.APPDATA`.
+For storage, we are using `Eclipse Store` (previously `MicroStream`). The data is stored in `$env.APPDATA`.
 
-Simply delete the folder to reset data.
+In order to delete the data, simply remove `$env.APPDATA/baka`.
 
 ## Installation
 
@@ -21,5 +31,5 @@ An installer can be built via maven:
 mvnw compile javafx:jlink jpackage:jpackage
 ```
 
-On windows, the installer is a little buggy, as automatic reinstallation does not work.
-To update, a manual uninstall is required before installation.
+On Windows, the installer is a little buggy, as automatic reinstallation does not work.
+To update, a manual deinstallation is required before installation.
