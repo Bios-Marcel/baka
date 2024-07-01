@@ -1,14 +1,15 @@
 package link.biosmarcel.baka;
 
+import link.biosmarcel.baka.data.Data;
 import org.eclipse.serializer.persistence.types.Storer;
 import org.eclipse.store.storage.embedded.types.EmbeddedStorageManager;
 
-public class State {
+public class ApplicationState {
     public final EmbeddedStorageManager storageManager;
     public final Data data;
     public final Storer storer;
 
-    public State(EmbeddedStorageManager storageManager, Storer storer, Data data) {
+    public ApplicationState(EmbeddedStorageManager storageManager, Storer storer, Data data) {
         this.storageManager = storageManager;
         this.storer = storer;
         this.data = data;

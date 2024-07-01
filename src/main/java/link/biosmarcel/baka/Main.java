@@ -5,6 +5,10 @@ import javafx.application.Platform;
 import javafx.scene.Scene;
 import javafx.scene.control.TabPane;
 import javafx.stage.Stage;
+import link.biosmarcel.baka.data.Data;
+import link.biosmarcel.baka.view.AccountsView;
+import link.biosmarcel.baka.view.EvaluationView;
+import link.biosmarcel.baka.view.PaymentsView;
 import org.eclipse.store.storage.embedded.configuration.types.EmbeddedStorageConfiguration;
 
 import java.nio.file.Path;
@@ -39,10 +43,11 @@ public class Main extends Application {
                 .setRoot(data)
                 .start();
 
-        State state = new State(storageManager, storageManager.createEagerStorer(), data);
+        ApplicationState state = new ApplicationState(storageManager, storageManager.createEagerStorer(), data);
 
         TabPane tabs = new TabPane(
                 new PaymentsView(state),
+                new AccountsView(state),
                 new EvaluationView(state)
         );
         tabs.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);

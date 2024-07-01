@@ -1,4 +1,4 @@
-package link.biosmarcel.baka;
+package link.biosmarcel.baka.data;
 
 public enum EqualityAssumption {
     EQUAL,

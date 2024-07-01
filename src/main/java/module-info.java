@@ -7,4 +7,6 @@ module link.biosmarcel.baka {
 
     exports link.biosmarcel.baka;
     exports link.biosmarcel.baka.bankimport;
+    exports link.biosmarcel.baka.data;
+    exports link.biosmarcel.baka.view;
 }

@@ -1,0 +1,7 @@
+/** These two rules prevent that JavaFX renders empty placeholder rows, if there is at least one other data row. */
+.table-row-cell:empty .table-cell {
+    -fx-border-width: 0px;
+}
+.table-row-cell:empty {
+    -fx-background-color: white;
+}

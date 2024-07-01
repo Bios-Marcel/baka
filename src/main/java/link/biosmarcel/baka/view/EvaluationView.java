@@ -1,4 +1,4 @@
-package link.biosmarcel.baka;
+package link.biosmarcel.baka.view;
 
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.ObjectProperty;
@@ -13,10 +13,11 @@ import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
-import javafx.scene.control.Tab;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import link.biosmarcel.baka.ApplicationState;
+import link.biosmarcel.baka.data.Payment;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -25,9 +26,7 @@ import java.time.format.TextStyle;
 import java.time.temporal.TemporalAdjusters;
 import java.util.*;
 
-public class EvaluationView extends Tab {
-    private final State state;
-
+public class EvaluationView extends BakaTab {
     private final ObservableList<XYChart.Series<String, Number>> spendingsData;
     private final ObservableList<XYChart.Series<Number, Number>> balanceData;
     private final IntegerProperty balanceLowerBound;
@@ -35,23 +34,15 @@ public class EvaluationView extends Tab {
     private final ObjectProperty<LocalDate> startDate;
     private final ObjectProperty<LocalDate> endDate;
 
-    public EvaluationView(State state) {
-        super("Evaluation");
+    public EvaluationView(ApplicationState state) {
+        super("Evaluation", state);
 
-        this.state = state;
         this.spendingsData = FXCollections.observableArrayList();
         this.balanceData = FXCollections.observableArrayList();
         this.balanceLowerBound = new SimpleIntegerProperty();
         this.balanceUpperBound = new SimpleIntegerProperty();
         this.startDate = new SimpleObjectProperty<>();
         this.endDate = new SimpleObjectProperty<>();
-
-        selectedProperty().addListener((_, _, newValue) -> {
-            // Once the tab opens, we load all data, not before.
-            if (newValue) {
-                onTabActivate();
-            }
-        });
 
         final var spendingChartAmountAxis = new NumberAxis();
         spendingChartAmountAxis.setForceZeroInRange(true);
@@ -117,10 +108,6 @@ public class EvaluationView extends Tab {
         VBox.setVgrow(spendingsChart, Priority.ALWAYS);
 
         setContent(layout);
-    }
-
-    private void onTabActivate() {
-        updateCharts();
     }
 
     private void updateCharts() {
@@ -198,5 +185,14 @@ public class EvaluationView extends Tab {
 
     private static String renderMonth(final Month month) {
         return month.getDisplayName(TextStyle.FULL, Locale.getDefault());
+    }
+
+    @Override
+    protected void onTabActivated() {
+        updateCharts();
+    }
+
+    @Override
+    protected void onTabDeactivated() {
     }
 }

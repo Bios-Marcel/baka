@@ -1,6 +1,7 @@
 package link.biosmarcel.baka.bankimport;
 
-import link.biosmarcel.baka.Payment;
+import link.biosmarcel.baka.data.Account;
+import link.biosmarcel.baka.data.Payment;
 import org.apache.commons.csv.CSVFormat;
 
 import java.io.File;
@@ -27,7 +28,7 @@ public class SparkasseCSV {
         SPARKASSE_CURRENCY_FORMAT.setParseBigDecimal(true);
     }
 
-    public static List<Payment> parse(final File file) {
+    public static List<Payment> parse(final Account account, final File file) {
         try (Reader reader = Files.newBufferedReader(file.toPath(), StandardCharsets.ISO_8859_1)) {
             final var format = CSVFormat.Builder
                     .create(CSVFormat.EXCEL)
@@ -57,6 +58,7 @@ public class SparkasseCSV {
                 };
 
                 final Payment payment = new Payment(
+                        account,
                         amount,
                         reference,
                         record.get(11),
@@ -64,7 +66,7 @@ public class SparkasseCSV {
                         effectiveDate
                 );
 
-                payment.account = record.get(12);
+                payment.participant = Import.prepareIBAN(record.get(12));
                 payment.identifier = record.get(7);
 
                 newPayments.add(payment);

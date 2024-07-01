@@ -1,4 +1,4 @@
-package link.biosmarcel.baka;
+package link.biosmarcel.baka.view;
 
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
@@ -8,6 +8,8 @@ import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import link.biosmarcel.baka.ApplicationState;
+import link.biosmarcel.baka.data.Classification;
 import org.jspecify.annotations.Nullable;
 
 import java.math.BigDecimal;
@@ -16,9 +18,9 @@ import java.util.Objects;
 public class PaymentDetails extends VBox {
     public final ObjectProperty<@Nullable PaymentFX> activePayment = new SimpleObjectProperty<>();
     public final BooleanProperty disableComponents = new SimpleBooleanProperty(true);
-    private final State state;
+    private final ApplicationState state;
 
-    public PaymentDetails(final State state) {
+    public PaymentDetails(final ApplicationState state) {
         this.state = state;
 
         final TableView<Classification> classificationsTable = new TableView<>();

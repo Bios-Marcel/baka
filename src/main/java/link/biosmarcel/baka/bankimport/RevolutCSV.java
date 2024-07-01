@@ -1,6 +1,7 @@
 package link.biosmarcel.baka.bankimport;
 
-import link.biosmarcel.baka.Payment;
+import link.biosmarcel.baka.data.Account;
+import link.biosmarcel.baka.data.Payment;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.QuoteMode;
 
@@ -27,7 +28,7 @@ public class RevolutCSV {
         REVOLUT_CURRENCY_FORMAT.setParseBigDecimal(true);
     }
 
-    public static List<Payment> parse(final File file) {
+    public static List<Payment> parse(final Account account, final File file) {
         try (Reader reader = Files.newBufferedReader(file.toPath(), StandardCharsets.ISO_8859_1)) {
             final var format = CSVFormat.Builder
                     .create()
@@ -65,6 +66,7 @@ public class RevolutCSV {
                     default -> LocalDateTime.parse(record.get(2), REVOLUT_DATE_FORMAT);
                 };
                 final Payment payment = new Payment(
+                        account,
                         amount,
                         reference,
                         // Revolut CSV doesn't supply a name, we just got the reference, which is called "description"

@@ -1,4 +1,4 @@
-package link.biosmarcel.baka;
+package link.biosmarcel.baka.view;
 
 import javafx.beans.NamedArg;
 import javafx.collections.ListChangeListener;

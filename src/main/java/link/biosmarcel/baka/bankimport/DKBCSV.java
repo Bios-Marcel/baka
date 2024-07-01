@@ -1,6 +1,7 @@
 package link.biosmarcel.baka.bankimport;
 
-import link.biosmarcel.baka.Payment;
+import link.biosmarcel.baka.data.Account;
+import link.biosmarcel.baka.data.Payment;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.QuoteMode;
 
@@ -27,7 +28,7 @@ public class DKBCSV {
         CURRENCY_FORMAT.setParseBigDecimal(true);
     }
 
-    public static List<Payment> parse(final File file) {
+    public static List<Payment> parse(final Account account, final File file) {
         try (Reader reader = Files.newBufferedReader(file.toPath(), StandardCharsets.ISO_8859_1)) {
             final var format = CSVFormat.Builder
                     .create()
@@ -56,25 +57,26 @@ public class DKBCSV {
                     throw new RuntimeException(exception);
                 }
 
-                final LocalDate bookingDate = LocalDate.parse(record.get(0), DATE_FORMAT);
-                final LocalDate effectiveDate = switch (record.get(1)) {
+                final var bookingDate = LocalDate.parse(record.get(0), DATE_FORMAT).atStartOfDay();
+                final var effectiveDate = switch (record.get(1)) {
                     // EffectiveDate is optional, so to avoid confusion, we just set it to the same as bookingDate.
                     case null -> bookingDate;
                     case "" -> bookingDate;
-                    default -> LocalDate.parse(record.get(1), DATE_FORMAT);
+                    default -> LocalDate.parse(record.get(1), DATE_FORMAT).atStartOfDay();
                 };
                 final String name = record.get(3);
 
                 final Payment payment = new Payment(
+                        account,
                         amount,
                         reference,
                         name,
-                        bookingDate.atStartOfDay(),
-                        effectiveDate.atStartOfDay()
+                        bookingDate,
+                        effectiveDate
                 );
 
                 // Revolut CSV doesn't supply this, we just got the reference, which is called "description"
-                payment.account = record.get(5);
+                payment.participant = Import.prepareIBAN(record.get(5));
 
                 newPayments.add(payment);
             });
