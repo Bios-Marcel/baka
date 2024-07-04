@@ -3,11 +3,15 @@ package link.biosmarcel.baka.view;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.scene.control.Button;
+import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.util.Callback;
+import javafx.util.StringConverter;
 import link.biosmarcel.baka.ApplicationState;
 import link.biosmarcel.baka.data.Classification;
 import org.jspecify.annotations.Nullable;
@@ -24,12 +28,55 @@ public class PaymentDetails extends VBox {
         this.state = state;
 
         final TableView<Classification> classificationsTable = new TableView<>();
+        classificationsTable.setEditable(true);
 
         final TableColumn<Classification, BigDecimal> amountColumn = new TableColumn<>("Amount");
+        final Callback<TableColumn<Classification, @Nullable BigDecimal>, TableCell<Classification, @Nullable BigDecimal>> amountColumnCellFactory = __ ->
+                new TextFieldTableCell<>(new StringConverter<BigDecimal>() {
+                    @Override
+                    public @Nullable String toString(final @Nullable BigDecimal value) {
+                        if (value == null) {
+                            return null;
+                        }
+                        return value.toString();
+                    }
+
+                    @Override
+                    public @Nullable BigDecimal fromString(final @Nullable String string) {
+                        if (string == null || string.isBlank()) {
+                            return null;
+                        }
+                        return new BigDecimal(string);
+                    }
+                });
+        amountColumn.setCellFactory(amountColumnCellFactory);
         amountColumn.setCellValueFactory(new PropertyValueFactory<>("amount"));
+        amountColumn.setOnEditCommit(event -> {
+            event.getRowValue().amount = event.getNewValue();
+            state.storer.store(event.getRowValue());
+            state.storer.commit();
+        });
 
         final TableColumn<Classification, String> tagColumn = new TableColumn<>("Tag");
+        final Callback<TableColumn<Classification, @Nullable String>, TableCell<Classification, @Nullable String>> simpleStringColumnFactory = __ ->
+                new TextFieldTableCell<>(new StringConverter<String>() {
+                    @Override
+                    public @Nullable String toString(final @Nullable String string) {
+                        return string;
+                    }
+
+                    @Override
+                    public @Nullable String fromString(final @Nullable String string) {
+                        return string;
+                    }
+                });
+        tagColumn.setCellFactory(simpleStringColumnFactory);
         tagColumn.setCellValueFactory(new PropertyValueFactory<>("tag"));
+        tagColumn.setOnEditCommit(event -> {
+            event.getRowValue().tag = event.getNewValue();
+            state.storer.store(event.getRowValue());
+            state.storer.commit();
+        });
 
         classificationsTable.getColumns().addAll(
                 amountColumn,
@@ -55,8 +102,8 @@ public class PaymentDetails extends VBox {
             final var payment = Objects.requireNonNull(activePayment.get());
 
             final Classification newClassification = new Classification();
-            newClassification.amount = new BigDecimal("5.0");
-            newClassification.tag = "test";
+            // We default to the full amount, assuming one payment is USUALLY one thing.
+            newClassification.amount = payment.amount.get().abs();
 
             payment.payment.classifications.add(newClassification);
             payment.classifications.add(newClassification);

@@ -57,7 +57,7 @@ public class AccountsView extends BakaTab {
 
                     @Override
                     public @Nullable ImportFormat fromString(final @Nullable String string) {
-                        if (string != null && string != "") {
+                        if (string != null && string.isBlank()) {
                             return ImportFormat.valueOf(string);
                         }
                         return null;

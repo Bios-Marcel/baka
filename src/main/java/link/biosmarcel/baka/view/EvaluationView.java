@@ -13,11 +13,13 @@ import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
+import javafx.scene.control.Tooltip;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import link.biosmarcel.baka.ApplicationState;
 import link.biosmarcel.baka.data.Payment;
+import org.jspecify.annotations.Nullable;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -112,7 +114,8 @@ public class EvaluationView extends BakaTab {
 
     private void updateCharts() {
         final String unclassified = "Unclassified";
-        final Map<String, Map<Month, BigDecimal>> classificationToMonthToMoney = new HashMap<>();
+        final String ignore = "ignore";
+        final Map<String, @Nullable Map<Month, BigDecimal>> classificationToMonthToMoney = new HashMap<>();
         classificationToMonthToMoney.put(unclassified, new TreeMap<>());
 
         // FIXME Add initial balance.
@@ -150,16 +153,35 @@ public class EvaluationView extends BakaTab {
                 continue;
             }
 
-            // FIXME Retrieve classification via smart code that is yet to be written.
-            final var classification = classificationToMonthToMoney.get(unclassified);
-            var value = classification.get(month);
-            var amount = payment.amount;
-            if (value != null) {
-                value = amount.add(value);
-            } else {
-                value = amount;
+            var leftOver = payment.amount;
+            for (final var classification : payment.classifications) {
+                // Add to the negative amount
+                var amount = classification.amount.abs();
+                leftOver = leftOver.add(amount);
+                if (ignore.equals(classification.tag)) {
+                    continue;
+                }
+
+                var entry = classificationToMonthToMoney.computeIfAbsent(classification.tag, _ -> new TreeMap<>());
+                var value = entry.get(month);
+                if (value != null) {
+                    value = value.subtract(amount);
+                } else {
+                    value = amount.negate();
+                }
+                entry.put(month, value);
             }
-            classification.put(month, value);
+
+            if (leftOver.compareTo(BigDecimal.ZERO) != 0) {
+                final var entry = Objects.requireNonNull(classificationToMonthToMoney.get(unclassified));
+                var value = entry.get(month);
+                if (value != null) {
+                    value = leftOver.add(value);
+                } else {
+                    value = leftOver;
+                }
+                entry.put(month, value);
+            }
         }
 
         balanceLowerBound.setValue(Math.floor(balanceSeries.getData().getFirst().getXValue().doubleValue()));
@@ -170,17 +192,27 @@ public class EvaluationView extends BakaTab {
             final XYChart.Series<String, Number> categorySeries = new XYChart.Series<>();
             categorySeries.setName(category.getKey());
 
-            for (final var monthToAmount : category.getValue().entrySet()) {
-                categorySeries.getData().add(new XYChart.Data<>(
+            for (final var monthToAmount : Objects.requireNonNull(category.getValue()).entrySet()) {
+                categorySeries.getData().add(new XYChart.Data<String, Number>(
                         renderMonth(monthToAmount.getKey()),
                         monthToAmount.getValue()
                 ));
             }
 
+
             fragments.add(categorySeries);
         }
 
         spendingsData.setAll(fragments);
+
+        // Tooltips need to be set after adding the data, as they won't be added otherwise.
+        for (final var fragment : fragments) {
+            for (final var dataPoint : fragment.getData()) {
+                Tooltip tooltip = new Tooltip();
+                tooltip.setText(fragment.getName() + ": " + dataPoint.getYValue());
+                Tooltip.install(dataPoint.getNode(), tooltip);
+            }
+        }
     }
 
     private static String renderMonth(final Month month) {
