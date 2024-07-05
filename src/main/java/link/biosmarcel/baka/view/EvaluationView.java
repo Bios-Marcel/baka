@@ -57,7 +57,7 @@ public class EvaluationView extends BakaTab {
         spendingsChart.setAnimated(false);
 
         final var balanceChartDayAxis = new NumberAxis();
-        balanceChartDayAxis.setTickUnit(1.0);
+        balanceChartDayAxis.setTickUnit(0.2);
         balanceChartDayAxis.setAutoRanging(false);
         balanceChartDayAxis.lowerBoundProperty().bind(balanceLowerBound);
         balanceChartDayAxis.upperBoundProperty().bind(balanceUpperBound);
@@ -113,10 +113,9 @@ public class EvaluationView extends BakaTab {
     }
 
     private void updateCharts() {
-        final String unclassified = "Unclassified";
+        final String unclassified = "unclassified";
         final String ignore = "ignore";
         final Map<String, @Nullable Map<Month, BigDecimal>> classificationToMonthToMoney = new HashMap<>();
-        classificationToMonthToMoney.put(unclassified, new TreeMap<>());
 
         // FIXME Add initial balance.
         BigDecimal balance = new BigDecimal("0");
@@ -146,7 +145,14 @@ public class EvaluationView extends BakaTab {
                             / (double) (payment.effectiveDate.with(TemporalAdjusters.lastDayOfMonth()).getDayOfMonth())
                     // = 3.33
                     ;
-            balanceSeries.getData().add(new XYChart.Data<>(chartX, balance));
+
+            // We only want the latest datapoint for each point in time, to prevent having a day with 20 datapoints.
+            // This also gets rid of unnecessary fluctations.
+            if (!balanceSeries.getData().isEmpty() && balanceSeries.getData().getLast().getXValue().equals(chartX)) {
+                balanceSeries.getData().set(balanceSeries.getData().size() - 1, new XYChart.Data<>(chartX, balance));
+            } else {
+                balanceSeries.getData().add(new XYChart.Data<>(chartX, balance));
+            }
 
             // Separates balance from spendings.
             if (payment.amount.intValue() >= 0) {
@@ -173,7 +179,7 @@ public class EvaluationView extends BakaTab {
             }
 
             if (leftOver.compareTo(BigDecimal.ZERO) != 0) {
-                final var entry = Objects.requireNonNull(classificationToMonthToMoney.get(unclassified));
+                final var entry = Objects.requireNonNull(classificationToMonthToMoney.computeIfAbsent(unclassified, _ -> new TreeMap<>()));
                 var value = entry.get(month);
                 if (value != null) {
                     value = leftOver.add(value);
@@ -182,6 +188,12 @@ public class EvaluationView extends BakaTab {
                 }
                 entry.put(month, value);
             }
+        }
+
+        for (final var dataPoint : balanceSeries.getData()) {
+            Tooltip tooltip = new Tooltip();
+            tooltip.setText(String.valueOf(dataPoint.getYValue()));
+            Tooltip.install(dataPoint.getNode(), tooltip);
         }
 
         balanceLowerBound.setValue(Math.floor(balanceSeries.getData().getFirst().getXValue().doubleValue()));
@@ -195,10 +207,10 @@ public class EvaluationView extends BakaTab {
             for (final var monthToAmount : Objects.requireNonNull(category.getValue()).entrySet()) {
                 categorySeries.getData().add(new XYChart.Data<String, Number>(
                         renderMonth(monthToAmount.getKey()),
-                        monthToAmount.getValue()
+                        // We render positive values for now on, as the chart renders a 1 pixel gap between the series otherwise.
+                        monthToAmount.getValue().abs()
                 ));
             }
-
 
             fragments.add(categorySeries);
         }
