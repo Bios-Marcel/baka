@@ -1,3 +1,5 @@
+<img src="icon.ico" alt="stonks man" style="float: right">
+
 A simple visualisation tool for personal finances.
 Merge different bank accounts histories together, classify payments and do predictions.
 

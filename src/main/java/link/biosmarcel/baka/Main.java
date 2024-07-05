@@ -4,6 +4,7 @@ import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.scene.Scene;
 import javafx.scene.control.TabPane;
+import javafx.scene.image.Image;
 import javafx.stage.Stage;
 import link.biosmarcel.baka.data.Data;
 import link.biosmarcel.baka.view.AccountsView;
@@ -55,6 +56,7 @@ public class Main extends Application {
         Scene scene = new Scene(tabs, 800, 600);
         scene.getStylesheets().add(Objects.requireNonNull(Main.class.getResource("base.css")).toExternalForm());
         stage.setTitle("Baka");
+        stage.getIcons().add(new Image(getClass().getResourceAsStream("icon.png")));
         stage.setScene(scene);
 
         // FIXME This seems dumb?
