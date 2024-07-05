@@ -18,7 +18,9 @@ import link.biosmarcel.baka.data.Payment;
 import java.io.File;
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.function.BiFunction;
 
 public class PaymentsView extends BakaTab {
@@ -98,18 +100,7 @@ public class PaymentsView extends BakaTab {
         //  them a random identifier.
         if (!possibleDuplicates.isEmpty()) {
             System.out.println("Possible dupes: " + possibleDuplicates.size());
-
-            // FIXME We now do a demo resolve, by marking them all as "not a duplicate".
-            for (Map.Entry<Payment, Payment> possibleDuplicate : possibleDuplicates.entrySet()) {
-                possibleDuplicate.getKey().identifier = UUID.randomUUID().toString();
-                System.out.println(possibleDuplicate.getKey().identifier);
-            }
-            final var toReImport = possibleDuplicates.values();
-
-            final int newDupeCount = state.data.importPayments(toReImport).size();
-            if (newDupeCount != 0) {
-                System.out.println("Something went wrong, deduplication did not work");
-            }
+            // FIXME Do a reimport where the user can chose which to reimport.
         }
 
         state.storer.store(state.data);
