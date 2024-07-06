@@ -6,7 +6,7 @@
 
     <groupId>link.bios-marcel</groupId>
     <artifactId>baka</artifactId>
-    <version>0.1-SNAPSHOT</version>
+    <version>0.1.0</version>
     <name>baka</name>
 
     <properties>
@@ -130,7 +130,6 @@
                 <version>1.6.5</version>
                 <configuration>
                     <name>Baka</name>
-                    <appVersion>1.0.0</appVersion>
                     <vendor>link.biosmarcel</vendor>
                     <destination>target/dist</destination>
                     <module>${mainModule}/${mainClass}</module>
