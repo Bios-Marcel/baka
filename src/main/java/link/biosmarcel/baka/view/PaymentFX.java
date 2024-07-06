@@ -1,5 +1,7 @@
 package link.biosmarcel.baka.view;
 
+import javafx.beans.binding.Bindings;
+import javafx.beans.binding.StringBinding;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
@@ -30,6 +32,13 @@ public class PaymentFX {
     public final ObjectProperty<@Nullable LocalDate> effectiveDate = new SimpleObjectProperty<>();
 
     public final ObservableList<Classification> classifications = FXCollections.observableArrayList();
+    public final StringBinding classificationRenderValue = Bindings.createStringBinding(() -> {
+        return classifications
+                .stream()
+                .map(classification -> classification.tag)
+                .reduce((string, string2) -> string + "; " + string2)
+                .orElse("");
+    }, classifications);
 
     public PaymentFX(final Payment payment) {
         this.payment = payment;

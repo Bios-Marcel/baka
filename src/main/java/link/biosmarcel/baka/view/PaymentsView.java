@@ -9,7 +9,6 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import link.biosmarcel.baka.ApplicationState;
-import link.biosmarcel.baka.bankimport.*;
 import link.biosmarcel.baka.data.Account;
 import link.biosmarcel.baka.data.Payment;
 
@@ -47,6 +46,9 @@ public class PaymentsView extends BakaTab {
         effectiveDateColumn.setCellValueFactory(cell -> cell.getValue().effectiveDate);
         effectiveDateColumn.setSortType(TableColumn.SortType.DESCENDING);
 
+        final TableColumn<PaymentFX, String> tagsColumn = new TableColumn<>("Tags");
+        tagsColumn.setCellValueFactory(cell -> cell.getValue().classificationRenderValue);
+
         final TableColumn<PaymentFX, Account> accountColumn = new TableColumn<>("Account");
         accountColumn.setCellValueFactory(cell -> cell.getValue().account);
         accountColumn.setCellFactory(_ -> new TableCellRenderer<>(account -> account.name));
@@ -54,9 +56,10 @@ public class PaymentsView extends BakaTab {
         table.getColumns().addAll(
                 amountColumn,
                 nameColumn,
-                referenceColumn,
                 bookingDateColumn,
                 effectiveDateColumn,
+                tagsColumn,
+                referenceColumn,
                 accountColumn
         );
         table.getSortOrder().add(effectiveDateColumn);

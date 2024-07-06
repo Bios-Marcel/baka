@@ -19,6 +19,7 @@ import link.biosmarcel.baka.data.Classification;
 import org.jspecify.annotations.Nullable;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Objects;
 
 public class PaymentDetails extends VBox {
@@ -79,7 +80,14 @@ public class PaymentDetails extends VBox {
         tagColumn.setCellValueFactory(new PropertyValueFactory<>("tag"));
         tagColumn.setOnEditCommit(event -> {
             event.getRowValue().tag = event.getNewValue();
+            final var payment = Objects.requireNonNull(activePayment.get());
             state.storer.store(event.getRowValue());
+
+            // HACK Small trick to make sure we rerender the table cell. Not quite the best way, but it'll do for now.
+            final var old = new ArrayList<>(payment.classifications);
+            payment.classifications.clear();
+            payment.classifications.setAll(old);
+
             state.storer.commit();
         });
 
