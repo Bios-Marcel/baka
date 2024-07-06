@@ -127,9 +127,6 @@ public class PaymentsView extends BakaTab {
             if (account.name == null || account.name.isBlank()) {
                 continue;
             }
-            if (account.iban == null || account.iban.isBlank()) {
-                continue;
-            }
             if (account.importFormat == null) {
                 continue;
             }
