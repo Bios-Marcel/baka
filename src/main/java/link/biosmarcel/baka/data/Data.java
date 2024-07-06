@@ -1,5 +1,6 @@
 package link.biosmarcel.baka.data;
 
+import java.math.BigDecimal;
 import java.util.*;
 
 /**
@@ -21,8 +22,10 @@ public class Data {
      * to import. The existing data should receive identifiers, so that this process can be repeated for the future.
      */
     public Map<Payment, Payment> importPayments(final Collection<Payment> newPayments) {
-        final var deduplicatedPayments = newPayments
+        final var filteredPayments = newPayments
                 .stream()
+                // Banks sometimes add info payments at the end of the months. We don't want these for now.
+                .filter(payment -> payment.amount.compareTo(BigDecimal.ZERO) != 0)
                 .filter(newPayment -> {
                     // We iterate backwards to save time, as the payments are sorted by date descending.
                     for (int i = payments.size() - 1; i >= 0; i--) {
@@ -45,7 +48,6 @@ public class Data {
                 })
                 .toList();
 
-
         final Map<Payment, Payment> possibleDuplicates = new HashMap<>();
         OUTER_LOOP:
         for (final var newPayment : newPayments) {
@@ -62,7 +64,7 @@ public class Data {
             }
         }
 
-        payments.addAll(deduplicatedPayments);
+        payments.addAll(filteredPayments);
 
         // Since we can't guarantee the imported  data to be in our desired order, we resort the whole thing.
         payments.sort((o1, o2) -> {
