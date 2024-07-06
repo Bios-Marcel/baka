@@ -5,3 +5,10 @@
 .table-row-cell:empty {
     -fx-background-color: white;
 }
+
+.chart-line-symbol {
+    -fx-background-color: black;
+    -fx-background-insets: 0, 2;
+    -fx-background-radius: 4px;
+    -fx-padding: 4px;
+}
