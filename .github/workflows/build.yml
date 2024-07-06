@@ -1,0 +1,34 @@
+name: Build
+
+on: push
+
+jobs:
+  test-and-build:
+    strategy:
+      matrix:
+        include:
+          - platform: windows-latest
+            binary_name: Baka-*.exe
+            output_name: Baka.exe
+
+    runs-on: ${{ matrix.platform }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v2
+        with:
+          java-version: '22'
+          distribution: 'adopt'
+
+      - name: Build artifact
+        shell: bash
+        run: |
+          ./mvnw compile javafx:jlink jpackage:jpackage
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.output_name }}
+          path: ./target/dist/${{ matrix.binary_name }}
