@@ -17,6 +17,7 @@ import javafx.scene.control.Tooltip;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import javafx.util.Duration;
 import link.biosmarcel.baka.ApplicationState;
 import link.biosmarcel.baka.data.Payment;
 import org.jspecify.annotations.Nullable;
@@ -192,6 +193,7 @@ public class EvaluationView extends BakaTab {
 
         for (final var dataPoint : balanceSeries.getData()) {
             Tooltip tooltip = new Tooltip();
+            tooltip.setShowDelay(Duration.ZERO);
             tooltip.setText(String.valueOf(dataPoint.getYValue()));
             Tooltip.install(dataPoint.getNode(), tooltip);
         }
@@ -221,6 +223,7 @@ public class EvaluationView extends BakaTab {
         for (final var fragment : fragments) {
             for (final var dataPoint : fragment.getData()) {
                 Tooltip tooltip = new Tooltip();
+                tooltip.setShowDelay(Duration.ZERO);
                 tooltip.setText(fragment.getName() + ": " + dataPoint.getYValue());
                 Tooltip.install(dataPoint.getNode(), tooltip);
             }
