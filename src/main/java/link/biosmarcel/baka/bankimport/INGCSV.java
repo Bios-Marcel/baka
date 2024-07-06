@@ -19,10 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-/**
- * Format for old DKB UI. The new UI uses a new format.
- */
-public class DKBCSV {
+public class INGCSV {
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("dd.MM.yyyy");
     private static final DecimalFormat CURRENCY_FORMAT;
 
@@ -45,8 +42,8 @@ public class DKBCSV {
                     .build();
             final var records = format.parse(reader).iterator();
             // Skip header row; Format.setSkipHeaderRecord doesn't seem to work.
-            // Also skip rows that just contain meta data. Empty rows don't count, so we skip 5.
-            for (int i = 0; i < 5; i++) {
+            // Also skip rows that just contain meta data. Empty rows don't count, so we skip 10.
+            for (int i = 0; i < 10; i++) {
                 records.next();
             }
 
@@ -67,7 +64,7 @@ public class DKBCSV {
                     case "" -> bookingDate;
                     default -> LocalDate.parse(record.get(1), DATE_FORMAT).atStartOfDay();
                 };
-                final String name = record.get(3);
+                final String name = record.get(2);
 
                 final Payment payment = new Payment(
                         account,
@@ -78,7 +75,7 @@ public class DKBCSV {
                         effectiveDate
                 );
 
-                payment.participant = Import.prepareIBAN(record.get(5));
+                payment.participant = ""; // Not included in ING format
 
                 newPayments.add(payment);
             });
