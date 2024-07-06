@@ -1,5 +1,7 @@
 package link.biosmarcel.baka.view;
 
+import javafx.beans.binding.Bindings;
+import javafx.beans.binding.BooleanBinding;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.scene.control.Button;
@@ -22,6 +24,7 @@ import java.util.Objects;
 public class PaymentDetails extends VBox {
     public final ObjectProperty<@Nullable PaymentFX> activePayment = new SimpleObjectProperty<>();
     public final BooleanProperty disableComponents = new SimpleBooleanProperty(true);
+    private final BooleanBinding disableDelete; // Do not inline, it will get garbage collected!
     private final ApplicationState state;
 
     public PaymentDetails(final ApplicationState state) {
@@ -31,7 +34,8 @@ public class PaymentDetails extends VBox {
         classificationsTable.setEditable(true);
 
         final TableColumn<Classification, BigDecimal> amountColumn = new TableColumn<>("Amount");
-        final Callback<TableColumn<Classification, @Nullable BigDecimal>, TableCell<Classification, @Nullable BigDecimal>> amountColumnCellFactory = __ ->
+        final Callback<TableColumn<Classification, @Nullable BigDecimal>, TableCell<Classification, @Nullable BigDecimal>>
+                amountColumnCellFactory = _ ->
                 new TextFieldTableCell<>(new StringConverter<BigDecimal>() {
                     @Override
                     public @Nullable String toString(final @Nullable BigDecimal value) {
@@ -58,7 +62,8 @@ public class PaymentDetails extends VBox {
         });
 
         final TableColumn<Classification, String> tagColumn = new TableColumn<>("Tag");
-        final Callback<TableColumn<Classification, @Nullable String>, TableCell<Classification, @Nullable String>> simpleStringColumnFactory = __ ->
+        final Callback<TableColumn<Classification, @Nullable String>, TableCell<Classification, @Nullable String>>
+                simpleStringColumnFactory = _ ->
                 new TextFieldTableCell<>(new StringConverter<String>() {
                     @Override
                     public @Nullable String toString(final @Nullable String string) {
@@ -113,10 +118,14 @@ public class PaymentDetails extends VBox {
         });
 
         final var deleteButton = new Button("Delete");
-        final ReadOnlyObjectProperty<@Nullable Classification> selectedClassification = classificationsTable.getSelectionModel().selectedItemProperty();
-        selectedClassification.addListener((_, _, newValue) -> {
-            deleteButton.setDisable(newValue == null);
-        });
+        final ReadOnlyObjectProperty<@Nullable Classification> selectedClassifiction =
+                classificationsTable.getSelectionModel().selectedItemProperty();
+        disableDelete = Bindings.createBooleanBinding(
+                () -> disableComponents.get() || selectedClassifiction.get() == null,
+                disableComponents, selectedClassifiction);
+        deleteButton.disableProperty().bind(disableDelete);
+        final ReadOnlyObjectProperty<@Nullable Classification> selectedClassification =
+                classificationsTable.getSelectionModel().selectedItemProperty();
         deleteButton.setOnAction(_ -> {
             final var selected = Objects.requireNonNull(selectedClassification.get());
             final var payment = Objects.requireNonNull(activePayment.get());
