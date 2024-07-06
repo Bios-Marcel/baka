@@ -9,9 +9,7 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import link.biosmarcel.baka.ApplicationState;
-import link.biosmarcel.baka.bankimport.DKBCSV;
-import link.biosmarcel.baka.bankimport.RevolutCSV;
-import link.biosmarcel.baka.bankimport.SparkasseCSV;
+import link.biosmarcel.baka.bankimport.*;
 import link.biosmarcel.baka.data.Account;
 import link.biosmarcel.baka.data.Payment;
 
@@ -137,17 +135,10 @@ public class PaymentsView extends BakaTab {
             }
 
             final var menuItem = new MenuItem(account.name);
-            menuItem.setOnAction(__ -> {
-                switch (account.importFormat) {
-                    case SparkasseCSV -> importHandler(account, SparkasseCSV::parse);
-                    case DKBCSV -> importHandler(account, DKBCSV::parse);
-                    case RevolutCSV -> importHandler(account, RevolutCSV::parse);
-                }
-            });
+            menuItem.setOnAction(_ -> importHandler(account, account.importFormat.func));
             importButton.getItems().add(menuItem);
         }
     }
-
 
     @Override
     protected void onTabDeactivated() {

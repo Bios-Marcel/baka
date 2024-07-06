@@ -20,10 +20,10 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * Format for old DKB UI. The new UI uses a new format.
+ * Format for new DKB UI.
  */
-public class DKBCSV {
-    private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("dd.MM.yyyy");
+public class DKB2CSV {
+    private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("dd.MM.yy");
     private static final DecimalFormat CURRENCY_FORMAT;
 
     static {
@@ -52,10 +52,10 @@ public class DKBCSV {
 
             final List<Payment> newPayments = new ArrayList<>();
             records.forEachRemaining(record -> {
-                final var reference = record.get(4);
+                final var reference = record.get(5);
                 final BigDecimal amount;
                 try {
-                    amount = (BigDecimal) CURRENCY_FORMAT.parse(record.get(7));
+                    amount = (BigDecimal) CURRENCY_FORMAT.parse(record.get(8));
                 } catch (final ParseException exception) {
                     throw new RuntimeException(exception);
                 }
@@ -78,7 +78,7 @@ public class DKBCSV {
                         effectiveDate
                 );
 
-                payment.participant = Import.prepareIBAN(record.get(5));
+                payment.participant = Import.prepareIBAN(record.get(7));
 
                 newPayments.add(payment);
             });
