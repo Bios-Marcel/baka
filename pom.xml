@@ -24,6 +24,13 @@
             <version>22-ea+11</version>
         </dependency>
 
+        <!-- Used for filtering language parser -->
+        <dependency>
+            <groupId>org.antlr</groupId>
+            <artifactId>antlr4-runtime</artifactId>
+            <version>4.13.1</version>
+        </dependency>
+
         <!-- Nullness annotations -->
         <dependency>
             <groupId>org.jspecify</groupId>
@@ -66,55 +73,19 @@
 
     <build>
         <plugins>
-            <!--            <plugin>-->
-            <!--                <groupId>org.graalvm.buildtools</groupId>-->
-            <!--                <artifactId>native-maven-plugin</artifactId>-->
-            <!--                <version>0.10.2</version>-->
-            <!--                <extensions>true</extensions>-->
-            <!--                <executions>-->
-            <!--                    <execution>-->
-            <!--                        <id>build-native</id>-->
-            <!--                        <goals>-->
-            <!--                            <goal>compile-no-fork</goal>-->
-            <!--                        </goals>-->
-            <!--                        <phase>package</phase>-->
-            <!--                    </execution>-->
-            <!--                    <execution>-->
-            <!--                        <id>test-native</id>-->
-            <!--                        <goals>-->
-            <!--                            <goal>test</goal>-->
-            <!--                        </goals>-->
-            <!--                        <phase>test</phase>-->
-            <!--                    </execution>-->
-            <!--                </executions>-->
-            <!--                <configuration>-->
-            <!--                    <mainClass>${mainClass}</mainClass>-->
-            <!--                    <agent>-->
-            <!--                        <enabled>true</enabled>-->
-            <!--                    </agent>-->
-            <!--                </configuration>-->
-            <!--            </plugin>-->
-            <!--            <plugin>-->
-            <!--                <groupId>org.apache.maven.plugins</groupId>-->
-            <!--                <artifactId>maven-shade-plugin</artifactId>-->
-            <!--                <version>3.6.0</version>-->
-            <!--                <executions>-->
-            <!--                    <execution>-->
-            <!--                        <phase>package</phase>-->
-            <!--                        <goals>-->
-            <!--                            <goal>shade</goal>-->
-            <!--                        </goals>-->
-            <!--                        <configuration>-->
-            <!--                            <transformers>-->
-            <!--                                <transformer-->
-            <!--                                        implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">-->
-            <!--                                    <mainClass>${mainClass}</mainClass>-->
-            <!--                                </transformer>-->
-            <!--                            </transformers>-->
-            <!--                        </configuration>-->
-            <!--                    </execution>-->
-            <!--                </executions>-->
-            <!--            </plugin>-->
+            <plugin>
+                <!-- https://mvnrepository.com/artifact/org.antlr/antlr4-maven-plugin -->
+                <groupId>org.antlr</groupId>
+                <artifactId>antlr4-maven-plugin</artifactId>
+                <version>4.13.1</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>antlr4</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
