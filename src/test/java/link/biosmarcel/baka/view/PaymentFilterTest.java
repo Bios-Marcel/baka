@@ -9,6 +9,21 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 class PaymentFilterTest {
+    @Test
+    public void test_BinaryExpression_LowerCase() {
+        final var now = LocalDateTime.now();
+        final var account = new Account();
+        account.name = "dkb";
+        final var payment = new Payment(account, BigDecimal.ONE, "test reference", "fred", now, now);
+
+        final var filter = new PaymentFilter();
+
+        filter.setQuery("""
+                name="fred" and name="fred"
+                """);
+        Assertions.assertTrue(filter.test(payment));
+    }
+
     /**
      * Tests whether expression types (expression, binary expression and grouped expression) are correctly parsed and
      * treated in terms of precedence.

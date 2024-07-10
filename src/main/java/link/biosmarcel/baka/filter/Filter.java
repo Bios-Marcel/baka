@@ -84,7 +84,6 @@ public class Filter<FilterTarget> implements Predicate<FilterTarget> {
             @Override
             public void enterComparatorExpression(final filterParser.ComparatorExpressionContext ctx) {
                 final var targetContext = contextToExpression.get(ctx.parent);
-                final Predicate<FilterTarget> predicate;
 
                 final var operatorToExtractor = fieldToOperatorToExtractor.get(ctx.field().getText());
                 if (operatorToExtractor == null) {
@@ -94,9 +93,16 @@ public class Filter<FilterTarget> implements Predicate<FilterTarget> {
                 if (extractor == null) {
                     throw new IllegalStateException("Extractor not registered: " + ctx.field().getText() + "." + ctx.operator.getText());
                 }
-                predicate = x -> {
-                    Comparable<String> apply = (Comparable<String>) extractor.apply(x);
-                    return apply.compareTo(ctx.value().getText().substring(1, ctx.value().getText().length() - 1)) == 0;
+                final Predicate<FilterTarget> predicate = switch (ctx.operator.getText()) {
+                    case "=" -> x -> {
+                        Comparable<String> apply = (Comparable<String>) extractor.apply(x);
+                        return apply.compareTo(ctx.value().getText().substring(1, ctx.value().getText().length() - 1)) == 0;
+                    };
+                    case "!=" -> x -> {
+                        Comparable<String> apply = (Comparable<String>) extractor.apply(x);
+                        return apply.compareTo(ctx.value().getText().substring(1, ctx.value().getText().length() - 1)) != 0;
+                    };
+                    default -> throw new UnsupportedOperationException("operator not yet support");
                 };
 
                 insertPredicate(targetContext, predicate);
