@@ -1,8 +1,8 @@
 package link.biosmarcel.baka.filter;
 
-import link.biosmarcel.baka.filterBaseListener;
-import link.biosmarcel.baka.filterLexer;
-import link.biosmarcel.baka.filterParser;
+import link.biosmarcel.baka.FilterLexer;
+import link.biosmarcel.baka.FilterParser;
+import link.biosmarcel.baka.FilterParserBaseListener;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
@@ -29,16 +29,16 @@ public class Filter<FilterTarget> implements Predicate<FilterTarget> {
     }
 
     public void setQuery(final String textQuery) {
-        final var lexer = new filterLexer(CharStreams.fromString(textQuery));
-        final var parser = new filterParser(new CommonTokenStream(lexer));
+        final var lexer = new FilterLexer(CharStreams.fromString(textQuery));
+        final var parser = new FilterParser(new CommonTokenStream(lexer));
         final var parsedQuery = parser.query();
 
         ThreadLocal<Expression<FilterTarget>> root = new ThreadLocal<>();
         final Map<ParseTree, Expression<FilterTarget>> contextToExpression = new HashMap<>();
 
-        ParseTreeWalker.DEFAULT.walk(new filterBaseListener() {
+        ParseTreeWalker.DEFAULT.walk(new FilterParserBaseListener() {
             @Override
-            public void enterQuery(final filterParser.QueryContext ctx) {
+            public void enterQuery(final FilterParser.QueryContext ctx) {
                 if (ctx.getRuleContext().getChildCount() == 2) {
                     final Expression<FilterTarget> expression = new Expression<>();
                     root.set(expression);
@@ -57,7 +57,7 @@ public class Filter<FilterTarget> implements Predicate<FilterTarget> {
             }
 
             @Override
-            public void enterGroupedExpression(final filterParser.GroupedExpressionContext ctx) {
+            public void enterGroupedExpression(final FilterParser.GroupedExpressionContext ctx) {
                 var targetContext = contextToExpression.get(ctx.parent);
                 final var expression = new Expression<FilterTarget>();
                 contextToExpression.put(ctx, expression);
@@ -65,7 +65,7 @@ public class Filter<FilterTarget> implements Predicate<FilterTarget> {
             }
 
             @Override
-            public void enterBinaryExpression(final filterParser.BinaryExpressionContext ctx) {
+            public void enterBinaryExpression(final FilterParser.BinaryExpressionContext ctx) {
                 final var expression = new Expression<FilterTarget>();
                 if (ctx.operator.getText().equalsIgnoreCase("AND")) {
                     expression.binaryExpressionType = BinaryExpressionType.AND;
@@ -82,7 +82,7 @@ public class Filter<FilterTarget> implements Predicate<FilterTarget> {
             }
 
             @Override
-            public void enterComparatorExpression(final filterParser.ComparatorExpressionContext ctx) {
+            public void enterComparatorExpression(final FilterParser.ComparatorExpressionContext ctx) {
                 final var targetContext = contextToExpression.get(ctx.parent);
 
                 final var operatorToExtractor = fieldToOperatorToExtractor.get(ctx.field().getText());
