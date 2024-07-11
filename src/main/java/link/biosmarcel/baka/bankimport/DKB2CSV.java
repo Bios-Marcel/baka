@@ -67,7 +67,13 @@ public class DKB2CSV {
                     case "" -> bookingDate;
                     default -> LocalDate.parse(record.get(1), DATE_FORMAT).atStartOfDay();
                 };
-                final String name = record.get(3);
+
+                String name;
+                if ("ausgang".equalsIgnoreCase(record.get(6))) {
+                    name = record.get(4);
+                } else {
+                    name = record.get(3);
+                }
 
                 final Payment payment = new Payment(
                         account,
