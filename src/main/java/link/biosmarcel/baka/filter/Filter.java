@@ -5,6 +5,7 @@ import link.biosmarcel.baka.FilterParser;
 import link.biosmarcel.baka.FilterParserBaseListener;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.tree.ErrorNodeImpl;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.jspecify.annotations.Nullable;
@@ -17,20 +18,32 @@ import java.util.function.Predicate;
 public class Filter<FilterTarget> implements Predicate<FilterTarget> {
     private @Nullable Expression<FilterTarget> query;
 
-    final Map<String, Map<String /* FIXME Custom Compare Operator Type*/, Function<FilterTarget, Comparable<?>>>> fieldToOperatorToExtractor = new HashMap<>();
+    final Map<String, Map<Operator, FieldData<FilterTarget>>> fieldToOperatorToExtractor = new HashMap<>();
 
     public void register(
             final String field,
-            final String operator,
-            final Function<FilterTarget, Comparable<?>> extractor) {
+            final Operator operator,
+            final FilterTargetPredicate<FilterTarget> predicate,
+            final Function<String, Object> convertString) {
         fieldToOperatorToExtractor
                 .computeIfAbsent(field, _ -> new HashMap<>(/* FIXME Fixed Operator Size*/))
-                .put(operator, extractor);
+                .put(operator, new FieldData<>(predicate, convertString));
     }
 
-    public void setQuery(final String textQuery) {
+    public boolean setQuery(final String textQuery) {
+        try {
+            _setQuery(textQuery);
+            return true;
+        } catch (final RuntimeException exception) {
+            System.out.println("Failed to compile query: " + exception.getMessage());
+            return false;
+        }
+    }
+
+    private void _setQuery(final String textQuery) {
         final var lexer = new FilterLexer(CharStreams.fromString(textQuery));
         final var parser = new FilterParser(new CommonTokenStream(lexer));
+        parser.removeErrorListeners();
         final var parsedQuery = parser.query();
 
         ThreadLocal<Expression<FilterTarget>> root = new ThreadLocal<>();
@@ -58,6 +71,12 @@ public class Filter<FilterTarget> implements Predicate<FilterTarget> {
 
             @Override
             public void enterGroupedExpression(final FilterParser.GroupedExpressionContext ctx) {
+                for (final var child : ctx.children) {
+                    if (child instanceof ErrorNodeImpl) {
+                        throw new IllegalStateException("Query incomplete");
+                    }
+                }
+
                 var targetContext = contextToExpression.get(ctx.parent);
                 final var expression = new Expression<FilterTarget>();
                 contextToExpression.put(ctx, expression);
@@ -66,6 +85,12 @@ public class Filter<FilterTarget> implements Predicate<FilterTarget> {
 
             @Override
             public void enterBinaryExpression(final FilterParser.BinaryExpressionContext ctx) {
+                for (final var child : ctx.children) {
+                    if (child instanceof ErrorNodeImpl) {
+                        throw new IllegalStateException("Query incomplete");
+                    }
+                }
+
                 final var expression = new Expression<FilterTarget>();
                 if (ctx.operator.getText().equalsIgnoreCase("AND")) {
                     expression.binaryExpressionType = BinaryExpressionType.AND;
@@ -83,28 +108,39 @@ public class Filter<FilterTarget> implements Predicate<FilterTarget> {
 
             @Override
             public void enterComparatorExpression(final FilterParser.ComparatorExpressionContext ctx) {
-                final var targetContext = contextToExpression.get(ctx.parent);
+                for (final var child : ctx.children) {
+                    if (child instanceof ErrorNodeImpl) {
+                        throw new IllegalStateException("Query incomplete");
+                    }
+                }
 
+                final var targetContext = contextToExpression.get(ctx.parent);
                 final var operatorToExtractor = fieldToOperatorToExtractor.get(ctx.field().getText());
                 if (operatorToExtractor == null) {
                     throw new IllegalStateException("Field not registered: " + ctx.field().getText());
                 }
-                final var extractor = operatorToExtractor.get(ctx.operator.getText());
+
+                final Operator operator = switch (ctx.operator.getText()) {
+                    case "=" -> Operator.EQ;
+                    case "!=" -> Operator.NOT_EQ;
+                    case "contains", "has" -> Operator.HAS;
+                    default -> throw new UnsupportedOperationException("Unknown operator: " + ctx.operator.getText());
+                };
+                final var extractor = operatorToExtractor.get(operator);
                 if (extractor == null) {
                     throw new IllegalStateException("Extractor not registered: " + ctx.field().getText() + "." + ctx.operator.getText());
                 }
-                final Predicate<FilterTarget> predicate = switch (ctx.operator.getText()) {
-                    case "=" -> x -> {
-                        Comparable<String> apply = (Comparable<String>) extractor.apply(x);
-                        return apply.compareTo(ctx.value().getText().substring(1, ctx.value().getText().length() - 1)) == 0;
-                    };
-                    case "!=" -> x -> {
-                        Comparable<String> apply = (Comparable<String>) extractor.apply(x);
-                        return apply.compareTo(ctx.value().getText().substring(1, ctx.value().getText().length() - 1)) != 0;
-                    };
-                    default -> throw new UnsupportedOperationException("operator not yet support");
-                };
 
+                String unquoted;
+                final var value = ctx.value();
+                final var stringToken = value.STRING();
+                if (stringToken != null) {
+                    unquoted = stringToken.getText().substring(1, stringToken.getText().length() - 1);
+                } else {
+                    unquoted = value.getText();
+                }
+                final Object filterValue = extractor.convertString.apply(unquoted);
+                final Predicate<FilterTarget> predicate = x -> extractor.operate.test(x, filterValue);
                 insertPredicate(targetContext, predicate);
             }
         }, parsedQuery);

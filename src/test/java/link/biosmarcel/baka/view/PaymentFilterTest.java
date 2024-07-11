@@ -24,6 +24,38 @@ class PaymentFilterTest {
         Assertions.assertTrue(filter.test(payment));
     }
 
+    @Test
+    public void test_complex() {
+
+        final var now = LocalDateTime.now();
+        final var account = new Account();
+        account.name = "dkb";
+        final var payment = new Payment(account, BigDecimal.ONE, "Nettowelt GmbH", "aifinyo Finance GmbH", now, now);
+
+        final var filter = new PaymentFilter();
+
+        filter.setQuery("""
+                name has versicherung or reference has versicherung or name has prokundo or name has finance
+                """);
+        Assertions.assertTrue(filter.test(payment));
+    }
+
+    @Test
+    public void test_jimBlock() {
+
+        final var now = LocalDateTime.now();
+        final var account = new Account();
+        account.name = "dkb";
+        final var payment = new Payment(account, BigDecimal.ONE, "Debitcard", "JIM.BLOCK", now, now);
+
+        final var filter = new PaymentFilter();
+
+        filter.setQuery("""
+                name has "jim.block" or reference has "takeaway.com"
+                """);
+        Assertions.assertTrue(filter.test(payment));
+    }
+
     /**
      * Tests whether expression types (expression, binary expression and grouped expression) are correctly parsed and
      * treated in terms of precedence.

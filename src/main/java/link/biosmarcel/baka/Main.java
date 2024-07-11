@@ -8,6 +8,7 @@ import javafx.scene.image.Image;
 import javafx.stage.Stage;
 import link.biosmarcel.baka.data.Data;
 import link.biosmarcel.baka.view.AccountsView;
+import link.biosmarcel.baka.view.ClassificationsView;
 import link.biosmarcel.baka.view.EvaluationView;
 import link.biosmarcel.baka.view.PaymentsView;
 import org.eclipse.store.storage.embedded.configuration.types.EmbeddedStorageConfiguration;
@@ -49,19 +50,22 @@ public class Main extends Application {
         TabPane tabs = new TabPane(
                 new PaymentsView(state),
                 new AccountsView(state),
-                new EvaluationView(state)
+                new EvaluationView(state),
+                new ClassificationsView(state)
         );
         tabs.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
 
         Scene scene = new Scene(tabs, 800, 600);
         scene.getStylesheets().add(Objects.requireNonNull(Main.class.getResource("base.css")).toExternalForm());
         stage.setTitle("Baka");
-        stage.getIcons().add(new Image(getClass().getResourceAsStream("icon.png")));
+        stage.getIcons().add(new Image(Objects.requireNonNull(getClass().getResourceAsStream("icon.png"))));
         stage.setScene(scene);
 
         // FIXME This seems dumb?
         Platform.setImplicitExit(true);
-        stage.setOnCloseRequest((ae) -> {
+        stage.setOnCloseRequest(_ -> {
+            // Not shutting down might result in data loss
+            storageManager.shutdown();
             Platform.exit();
             System.exit(0);
         });

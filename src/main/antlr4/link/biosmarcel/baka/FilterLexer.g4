@@ -4,6 +4,7 @@ options {
     caseInsensitive = true;
 }
 
+HAS:                       ('contains'|'has');
 AND:                       'and';
 OR:                        'or';
 OPEN_PAR:                  '(';
@@ -13,7 +14,9 @@ LT_EQ:                     '<=';
 GT:                        '>';
 GT_EQ:                     '>=';
 EQ:                        '=';
-NOT_EQ1:                   '!=';
-IDENTIFIER:                [a-z_]+;
-STRING_LITERAL:            ["].+?["];
+NOT_EQ:                    '!=';
+STRING:                    ["].+?["];
+BOOLEAN:                   ('true'|'false');
+NUMBER:                    [,.0-9]+;
+WORD:                      ~[ \u000B\t\r\n]+;
 SPACES:                    [ \u000B\t\r\n] -> channel(HIDDEN);
