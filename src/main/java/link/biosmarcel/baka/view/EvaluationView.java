@@ -198,8 +198,10 @@ public class EvaluationView extends BakaTab {
             Tooltip.install(dataPoint.getNode(), tooltip);
         }
 
-        balanceLowerBound.setValue(Math.floor(balanceSeries.getData().getFirst().getXValue().doubleValue()));
-        balanceUpperBound.setValue(Math.ceil(balanceSeries.getData().getLast().getXValue().doubleValue()));
+        if (!balanceSeries.getData().isEmpty()) {
+            balanceLowerBound.setValue(Math.floor(balanceSeries.getData().getFirst().getXValue().doubleValue()));
+            balanceUpperBound.setValue(Math.ceil(balanceSeries.getData().getLast().getXValue().doubleValue()));
+        }
 
         final List<XYChart.Series<String, Number>> fragments = new ArrayList<>();
         for (final var category : classificationToMonthToMoney.entrySet()) {
@@ -207,7 +209,7 @@ public class EvaluationView extends BakaTab {
             categorySeries.setName(category.getKey());
 
             for (final var monthToAmount : Objects.requireNonNull(category.getValue()).entrySet()) {
-                categorySeries.getData().add(new XYChart.Data<String, Number>(
+                categorySeries.getData().add(new XYChart.Data<>(
                         renderMonth(monthToAmount.getKey()),
                         // We render positive values for now on, as the chart renders a 1 pixel gap between the series otherwise.
                         monthToAmount.getValue().abs()
