@@ -1,5 +1,8 @@
 package link.biosmarcel.baka.view;
 
+import javafx.application.Platform;
+import javafx.beans.binding.Bindings;
+import javafx.beans.binding.BooleanBinding;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.geometry.Insets;
 import javafx.scene.control.*;
@@ -9,73 +12,65 @@ import link.biosmarcel.baka.ApplicationState;
 import link.biosmarcel.baka.data.ClassificationRule;
 import org.jspecify.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+
 public class ClassificationsView extends BakaTab {
-    private final ListView<ClassificationRule> listView;
+    private final ListView<ClassificationRuleFX> listView;
+    private final TextField nameField;
+    private final TextField tagField;
+    private final TextArea queryField;
+    private final ReadOnlyObjectProperty<@Nullable ClassificationRuleFX> selectedRuleProperty;
+
 
     public ClassificationsView(ApplicationState state) {
         super("Classifications", state);
 
         listView = new ListView<>();
 
-        // FIXME Add name, make adjustable
-        listView.setCellFactory(param -> new ListCell<>() {
+        // FIXME Abstract this away for when we have multiple list views.
+        listView.setCellFactory(_ -> new ListCell<>() {
             @Override
-            protected void updateItem(ClassificationRule item, boolean empty) {
+            protected void updateItem(@Nullable ClassificationRuleFX item, boolean empty) {
                 super.updateItem(item, empty);
-
-                if (empty) {
-                    setText("");
+                textProperty().unbind();
+                if (item == null) {
+                    setText(null);
                 } else {
-                    setText(item.name);
+                    textProperty().bind(item.name);
                 }
             }
         });
-        ReadOnlyObjectProperty<@Nullable ClassificationRule> classificationRuleReadOnlyObjectProperty = listView.getSelectionModel().selectedItemProperty();
 
-        final TextField nameField = new TextField();
-        nameField.textProperty().addListener((_, _, newValue) -> {
-            var selectedClassification = classificationRuleReadOnlyObjectProperty.getValue();
-            if (selectedClassification != null) {
-                selectedClassification.name = newValue;
-            }
-            state.storer.store(selectedClassification);
-            state.storer.commit();
-        });
-        final TextField tagField = new TextField();
-        tagField.textProperty().addListener((_, _, newValue) -> {
-            var selectedClassification = classificationRuleReadOnlyObjectProperty.getValue();
-            if (selectedClassification != null) {
-                selectedClassification.tag = newValue;
-            }
-            state.storer.store(selectedClassification);
-            state.storer.commit();
-        });
-        final TextArea queryField = new TextArea();
-        queryField.textProperty().addListener((_, _, newValue) -> {
-            var selectedClassification = classificationRuleReadOnlyObjectProperty.getValue();
-            if (selectedClassification != null) {
-                selectedClassification.query = newValue;
-            }
-            state.storer.store(selectedClassification);
-            state.storer.commit();
-        });
+        selectedRuleProperty = listView.getSelectionModel().selectedItemProperty();
+        nameField = new TextField();
+        tagField = new TextField();
+        queryField = new TextArea();
 
-        classificationRuleReadOnlyObjectProperty.addListener((_, _, newValue) -> {
-            if (newValue == null) {
-                nameField.setDisable(true);
-                tagField.setDisable(true);
-                queryField.setDisable(true);
-                return;
+        final BooleanBinding disableInputs = Bindings.createBooleanBinding(() -> selectedRuleProperty.getValue() == null, selectedRuleProperty);
+        selectedRuleProperty.addListener((_, oldValue, newValue) -> {
+            if (oldValue != null) {
+                oldValue.apply();
+
+                oldValue.name.unbindBidirectional(nameField.textProperty());
+                oldValue.tag.unbindBidirectional(tagField.textProperty());
+                oldValue.query.unbindBidirectional(queryField.textProperty());
+
+                nameField.setText("");
+                tagField.setText("");
+                queryField.setText("");
             }
 
-            nameField.setDisable(false);
-            tagField.setDisable(false);
-            queryField.setDisable(false);
-
-            nameField.setText(newValue.name);
-            tagField.setText(newValue.tag);
-            queryField.setText(newValue.query);
+            if (newValue != null) {
+                nameField.textProperty().bindBidirectional(newValue.name);
+                tagField.textProperty().bindBidirectional(newValue.tag);
+                queryField.textProperty().bindBidirectional(newValue.query);
+            }
         });
+        nameField.disableProperty().bind(disableInputs);
+        tagField.disableProperty().bind(disableInputs);
+        queryField.disableProperty().bind(disableInputs);
 
         final var details = new GridPane(5.0, 10.0);
         details.add(new Label("Name"), 0, 0);
@@ -90,69 +85,59 @@ public class ClassificationsView extends BakaTab {
             final var newClassification = new ClassificationRule();
             state.data.classificationRules.add(newClassification);
 
-            state.storer.store(state.data.classificationRules);
-            if (state.data.classificationRules.size() == 1) {
-                state.storer.store(state.data);
-            }
-            state.storer.commit();
-
-            listView.getItems().add(newClassification);
-            listView.getSelectionModel().select(newClassification);
+            final var newRuleFX = new ClassificationRuleFX(newClassification);
+            listView.getItems().add(newRuleFX);
+            listView.getSelectionModel().select(newRuleFX);
         });
         final var deleteButton = new Button("Delete");
         deleteButton.setOnAction(_ -> {
-            final var selectedClassification = classificationRuleReadOnlyObjectProperty.getValue();
+            final var selectedClassification = selectedRuleProperty.getValue();
             if (selectedClassification == null) {
                 return;
             }
 
-            state.data.classificationRules.remove(selectedClassification);
-            state.storer.store(state.data.classificationRules);
-            state.storer.commit();
+            state.data.classificationRules.remove(selectedClassification.rule);
 
+            listView.getSelectionModel().select(listView.getSelectionModel().getSelectedIndex() + 1);
             listView.getItems().remove(selectedClassification);
         });
 
         final var upButton = new Button("↑");
         upButton.setOnAction(_ -> {
-            final var selectedClassification = classificationRuleReadOnlyObjectProperty.getValue();
+            final var selectedClassification = selectedRuleProperty.getValue();
             if (selectedClassification == null) {
                 return;
             }
 
-            final int index = state.data.classificationRules.indexOf(selectedClassification);
+            final int index = state.data.classificationRules.indexOf(selectedClassification.rule);
             if (index == 0) {
                 return;
             }
 
             state.data.classificationRules.set(index, state.data.classificationRules.get(index - 1));
-            state.data.classificationRules.set(index - 1, selectedClassification);
-            state.storer.store(state.data.classificationRules);
-            state.storer.commit();
+            state.data.classificationRules.set(index - 1, selectedClassification.rule);
 
             // FIXME delta change
-            listView.getItems().setAll(state.data.classificationRules);
+            listView.getItems().setAll(convertRules(state.data.classificationRules));
             listView.getSelectionModel().select(selectedClassification);
         });
         final var downButton = new Button("↓");
         downButton.setOnAction(_ -> {
-            final var selectedClassification = classificationRuleReadOnlyObjectProperty.getValue();
+            final var selectedClassification = selectedRuleProperty.getValue();
             if (selectedClassification == null) {
                 return;
             }
 
-            final int index = state.data.classificationRules.indexOf(selectedClassification);
+            final int index = state.data.classificationRules.indexOf(selectedClassification.rule);
             if (index == state.data.classificationRules.size() - 1) {
                 return;
             }
 
             state.data.classificationRules.set(index, state.data.classificationRules.get(index + 1));
-            state.data.classificationRules.set(index + 1, selectedClassification);
-            state.storer.store(state.data.classificationRules);
-            state.storer.commit();
+            state.data.classificationRules.set(index + 1, selectedClassification.rule);
 
             // FIXME delta change
-            listView.getItems().setAll(state.data.classificationRules);
+            listView.getItems().setAll(convertRules(state.data.classificationRules));
             listView.getSelectionModel().select(selectedClassification);
         });
         final var listViewButtons = new HBox(
@@ -171,14 +156,41 @@ public class ClassificationsView extends BakaTab {
         setContent(layout);
     }
 
+
+    private List<ClassificationRuleFX> convertRules(final Collection<ClassificationRule> elements) {
+        final List<ClassificationRuleFX> newFXElements = new ArrayList<>(elements.size());
+        for (final var element : elements) {
+            newFXElements.add(new ClassificationRuleFX(element));
+        }
+        return newFXElements;
+    }
+
     @Override
     protected void onTabActivated() {
-        System.out.println(state.data.classificationRules.size());
-        listView.getItems().setAll(state.data.classificationRules);
+        listView.getItems().setAll(convertRules(state.data.classificationRules));
+
+        if (!listView.getItems().isEmpty()) {
+            listView.getSelectionModel().select(0);
+        }
+
+        // Won't work otherwise, due to the event being fired relatively early.
+        Platform.runLater(listView::requestFocus);
     }
 
     @Override
     protected void onTabDeactivated() {
+        listView.getItems().clear();
+    }
 
+    @Override
+    public void save() {
+        final var selected = selectedRuleProperty.get();
+        if (selected != null) {
+            selected.apply();
+        }
+
+        // Just storing the classifications will cause issues if it hasn't been persisted before.
+        state.storer.store(state.data);
+        state.storer.commit();
     }
 }

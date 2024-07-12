@@ -7,10 +7,7 @@ import javafx.scene.control.TabPane;
 import javafx.scene.image.Image;
 import javafx.stage.Stage;
 import link.biosmarcel.baka.data.Data;
-import link.biosmarcel.baka.view.AccountsView;
-import link.biosmarcel.baka.view.ClassificationsView;
-import link.biosmarcel.baka.view.EvaluationView;
-import link.biosmarcel.baka.view.PaymentsView;
+import link.biosmarcel.baka.view.*;
 import org.eclipse.store.storage.embedded.configuration.types.EmbeddedStorageConfiguration;
 
 import java.nio.file.Path;
@@ -64,10 +61,12 @@ public class Main extends Application {
         // FIXME This seems dumb?
         Platform.setImplicitExit(true);
         stage.setOnCloseRequest(_ -> {
+            // Triggers onTabDeactivate
+            ((BakaTab) tabs.getSelectionModel().getSelectedItem()).save();
+
             // Not shutting down might result in data loss
             storageManager.shutdown();
             Platform.exit();
-            System.exit(0);
         });
 
         stage.sizeToScene();
