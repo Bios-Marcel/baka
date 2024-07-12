@@ -27,8 +27,8 @@ public class Main extends Application {
         final Data data = new Data();
         final var storageManager = EmbeddedStorageConfiguration
                 .Builder()
-                .setStorageDirectory(getDataDir("storage").toString())
-                .setBackupDirectory(getDataDir("backup").toString())
+                .setStorageDirectory(getDataDir("storage_temp").toString())
+                .setBackupDirectory(getDataDir("backup_temp").toString())
                 .setChannelCount(1)
                 .createEmbeddedStorageFoundation()
                 //.onConnectionFoundation((connection) -> {
@@ -43,6 +43,9 @@ public class Main extends Application {
                 .start();
 
         ApplicationState state = new ApplicationState(storageManager, storageManager.createEagerStorer(), data);
+
+//        data.payments.clear();
+//        storageManager.store(data);
 
         TabPane tabs = new TabPane(
                 new PaymentsView(state),

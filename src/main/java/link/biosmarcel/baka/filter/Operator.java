@@ -4,4 +4,6 @@ public enum Operator {
     EQ,
     NOT_EQ,
     HAS,
+    LT,
+    GT,
 }

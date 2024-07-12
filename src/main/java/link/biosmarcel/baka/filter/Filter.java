@@ -18,13 +18,13 @@ import java.util.function.Predicate;
 public class Filter<FilterTarget> implements Predicate<FilterTarget> {
     private @Nullable Expression<FilterTarget> query;
 
-    final Map<String, Map<Operator, FieldData<FilterTarget>>> fieldToOperatorToExtractor = new HashMap<>();
+    final Map<String, Map<Operator, FieldData<FilterTarget, ?>>> fieldToOperatorToExtractor = new HashMap<>();
 
-    public void register(
+    public <ValueType> void register(
             final String field,
             final Operator operator,
-            final FilterTargetPredicate<FilterTarget> predicate,
-            final Function<String, Object> convertString) {
+            final FilterTargetPredicate<FilterTarget, ValueType> predicate,
+            final Function<String, ValueType> convertString) {
         fieldToOperatorToExtractor
                 .computeIfAbsent(field, _ -> new HashMap<>(/* FIXME Fixed Operator Size*/))
                 .put(operator, new FieldData<>(predicate, convertString));
@@ -120,27 +120,34 @@ public class Filter<FilterTarget> implements Predicate<FilterTarget> {
                     throw new IllegalStateException("Field not registered: " + ctx.field().getText());
                 }
 
+                if (ctx.children.size() <= 1) {
+                    throw new IllegalStateException("missing operator");
+                }
+
                 final Operator operator = switch (ctx.operator.getText()) {
                     case "=" -> Operator.EQ;
                     case "!=" -> Operator.NOT_EQ;
                     case "contains", "has" -> Operator.HAS;
                     default -> throw new UnsupportedOperationException("Unknown operator: " + ctx.operator.getText());
                 };
-                final var extractor = operatorToExtractor.get(operator);
+                final FieldData<FilterTarget, Object> extractor = (FieldData<FilterTarget, Object>) operatorToExtractor.get(operator);
                 if (extractor == null) {
                     throw new IllegalStateException("Extractor not registered: " + ctx.field().getText() + "." + ctx.operator.getText());
                 }
 
-                String unquoted;
                 final var value = ctx.value();
+                String unquoted = value.getText();
+                if (unquoted.isBlank()) {
+                    throw new IllegalStateException("missing value");
+                }
+
                 final var stringToken = value.STRING();
                 if (stringToken != null) {
                     unquoted = stringToken.getText().substring(1, stringToken.getText().length() - 1);
-                } else {
-                    unquoted = value.getText();
                 }
-                final Object filterValue = extractor.convertString.apply(unquoted);
-                final Predicate<FilterTarget> predicate = x -> extractor.operate.test(x, filterValue);
+
+                final var converted = extractor.convertString.apply(unquoted);
+                final Predicate<FilterTarget> predicate = x -> extractor.operate.test(x, converted);
                 insertPredicate(targetContext, predicate);
             }
         }, parsedQuery);
