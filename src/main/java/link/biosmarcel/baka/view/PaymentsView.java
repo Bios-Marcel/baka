@@ -90,7 +90,7 @@ public class PaymentsView extends BakaTab {
 
         final var topBarCenterSpacer = new Region();
         final var layout = new VBox(
-                new HBox(importButton, classifyButton, topBarCenterSpacer, filterField),
+                new HBox(2.5, importButton, classifyButton, topBarCenterSpacer, filterField),
                 table,
                 details
         );
