@@ -29,6 +29,13 @@
             <groupId>org.antlr</groupId>
             <artifactId>antlr4-runtime</artifactId>
             <version>4.13.1</version>
+            <!--
+                Due to the fact that the antlr people are not adding a Java module and Java 21+ not supporting
+                automatic modules anymore, we are using moditect to generate a module, which we then specify as a direct
+                file system dependency.
+            -->
+            <scope>system</scope>
+            <systemPath>${project.build.directory}/modules/antlr4-runtime-4.13.1.jar</systemPath>
         </dependency>
 
         <!-- Nullness annotations -->
@@ -94,6 +101,44 @@
                     <source>22</source>
                     <target>22</target>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.moditect</groupId>
+                <artifactId>moditect-maven-plugin</artifactId>
+                <version>1.2.2.Final</version>
+                <executions>
+                    <execution>
+                        <id>add-module-infos</id>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>add-module-info</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.directory}/modules</outputDirectory>
+                            <overwriteExistingFiles>true</overwriteExistingFiles>
+                            <modules>
+                                <module>
+                                    <artifact>
+                                        <groupId>org.antlr</groupId>
+                                        <artifactId>antlr4-runtime</artifactId>
+                                        <version>4.13.1</version>
+                                    </artifact>
+                                    <moduleInfoSource>
+                                        module org.antlr.antlr4.runtime {
+                                        exports org.antlr.v4.runtime;
+                                        exports org.antlr.v4.runtime.atn;
+                                        exports org.antlr.v4.runtime.dfa;
+                                        exports org.antlr.v4.runtime.misc;
+                                        exports org.antlr.v4.runtime.tree;
+                                        exports org.antlr.v4.runtime.tree.pattern;
+                                        exports org.antlr.v4.runtime.tree.xpath;
+                                        }
+                                    </moduleInfoSource>
+                                </module>
+                            </modules>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
             <plugin>
                 <groupId>org.panteleyev</groupId>

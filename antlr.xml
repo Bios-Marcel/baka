@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>link.bios-marcel</groupId>
+    <artifactId>baka</artifactId>
+    <version>0.1.0</version>
+    <name>baka</name>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <junit.version>5.10.0</junit.version>
+        <mainModule>link.biosmarcel.baka</mainModule>
+        <mainPackage>link.biosmarcel.baka</mainPackage>
+        <mainClass>${mainPackage}.Main</mainClass>
+    </properties>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.13.0</version>
+                <configuration>
+                    <source>22</source>
+                    <target>22</target>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.moditect</groupId>
+                <artifactId>moditect-maven-plugin</artifactId>
+                <version>1.2.2.Final</version>
+                <executions>
+                    <execution>
+                        <id>add-module-infos</id>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>add-module-info</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.directory}/modules</outputDirectory>
+                            <overwriteExistingFiles>true</overwriteExistingFiles>
+                            <modules>
+                                <module>
+                                    <artifact>
+                                        <groupId>org.antlr</groupId>
+                                        <artifactId>antlr4-runtime</artifactId>
+                                        <version>4.13.1</version>
+                                    </artifact>
+                                    <moduleInfoSource>
+                                        module org.antlr.antlr4.runtime {
+                                        exports org.antlr.v4.runtime;
+                                        exports org.antlr.v4.runtime.atn;
+                                        exports org.antlr.v4.runtime.dfa;
+                                        exports org.antlr.v4.runtime.misc;
+                                        exports org.antlr.v4.runtime.tree;
+                                        exports org.antlr.v4.runtime.tree.pattern;
+                                        exports org.antlr.v4.runtime.tree.xpath;
+                                        }
+                                    </moduleInfoSource>
+                                </module>
+                            </modules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>

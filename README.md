@@ -30,7 +30,9 @@ In order to delete the data, simply remove `$env.APPDATA/baka`.
 An installer can be built via maven:
 
 ```shell
-mvnw compile javafx:jlink jpackage:jpackage
+./mvnw dependency:get -Dartifact="org.antlr:antlr4-runtime:4.13.1:jar"
+./mvnw -f antlr.xml generate-resources
+./mvnw compile package javafx:jlink jpackage:jpackage
 ```
 
 On Windows, the installer is a little buggy, as automatic reinstallation does not work.
