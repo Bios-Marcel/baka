@@ -35,7 +35,8 @@ public class Data {
                             return false;
                         }
 
-                        if (newPayment.bookingDate.isBefore(existingPayment.bookingDate)) {
+                        // Importing older payments makes no sense, unless its a different bank account, as people use multiple accounts simultaneously.
+                        if (newPayment.account.equals(existingPayment.account) && newPayment.bookingDate.isBefore(existingPayment.bookingDate)) {
                             return false;
                         }
 

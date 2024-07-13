@@ -62,7 +62,7 @@ public class Payment {
      * might not include any data sufficient for uniquely identifying these two payments. So, only if
      */
     public EqualityAssumption assumeEquality(Payment other) {
-        if (account.equals(other.account)) {
+        if (!account.equals(other.account)) {
             return EqualityAssumption.NOT_EQUAL;
         }
 
