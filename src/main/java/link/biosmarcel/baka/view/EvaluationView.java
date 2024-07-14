@@ -11,15 +11,13 @@ import javafx.scene.chart.CategoryAxis;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
-import javafx.scene.control.DatePicker;
-import javafx.scene.control.Label;
-import javafx.scene.control.Tooltip;
+import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.util.Duration;
 import link.biosmarcel.baka.ApplicationState;
-import link.biosmarcel.baka.data.Payment;
+import link.biosmarcel.baka.data.Account;
 import org.jspecify.annotations.Nullable;
 
 import java.math.BigDecimal;
@@ -37,6 +35,14 @@ public class EvaluationView extends BakaTab {
     private final ObjectProperty<LocalDate> startDate;
     private final ObjectProperty<LocalDate> endDate;
 
+    private final ObservableList<Account> accounts;
+    private final ComboBox<Account> accountFilter;
+
+    /**
+     * This account will be abused to specify we want to show data across all accounts. This is due to the fact that null misbehaves.
+     */
+    private final Account ALL_ACCOUNTS = new Account();
+
     public EvaluationView(ApplicationState state) {
         super("Evaluation", state);
 
@@ -46,6 +52,8 @@ public class EvaluationView extends BakaTab {
         this.balanceUpperBound = new SimpleIntegerProperty();
         this.startDate = new SimpleObjectProperty<>();
         this.endDate = new SimpleObjectProperty<>();
+
+        this.accounts = FXCollections.observableArrayList();
 
         final var spendingChartAmountAxis = new NumberAxis();
         spendingChartAmountAxis.setForceZeroInRange(true);
@@ -89,14 +97,21 @@ public class EvaluationView extends BakaTab {
                 .with(TemporalAdjusters.lastDayOfMonth()));
         endDate.bind(endDatePicker.valueProperty());
 
-        startDate.addListener((_, _, _) -> updateCharts());
-        endDate.addListener((_, _, _) -> updateCharts());
+        accountFilter = new ComboBox<>();
+        accountFilter.setItems(accounts);
+        accountFilter.setButtonCell(new AccountComboBoxCell());
+        accountFilter.setCellFactory(_ -> new AccountComboBoxCell());
 
         final HBox topBar = new HBox(
                 startDatePicker,
-                endDatePicker
+                endDatePicker,
+                accountFilter
         );
-        topBar.setSpacing(5.0);
+        topBar.setSpacing(2.5);
+
+        startDate.addListener((_, _, _) -> updateCharts());
+        endDate.addListener((_, _, _) -> updateCharts());
+        accountFilter.getSelectionModel().selectedItemProperty().addListener((_, _, _) -> updateCharts());
 
         final VBox layout = new VBox(
                 topBar,
@@ -113,6 +128,21 @@ public class EvaluationView extends BakaTab {
         setContent(layout);
     }
 
+    private class AccountComboBoxCell extends ListCell<@Nullable Account> {
+        @Override
+        protected void updateItem(@Nullable Account item, boolean empty) {
+            super.updateItem(item, empty);
+
+            if (ALL_ACCOUNTS.equals(item)) {
+                setText("All");
+            } else if (item != null) {
+                setText(item.name);
+            } else {
+                setText("");
+            }
+        }
+    }
+
     private void updateCharts() {
         final String unclassified = "unclassified";
         final String ignore = "ignore";
@@ -123,10 +153,15 @@ public class EvaluationView extends BakaTab {
         final XYChart.Series<Number, Number> balanceSeries = new XYChart.Series<>();
         balanceData.setAll(balanceSeries);
 
-        final Collection<Payment> sorted = state.data.payments
-                .stream()
+        var sortedStream = state.data.payments.stream();
+        final var account = accountFilter.getSelectionModel().selectedItemProperty().get();
+        if (!ALL_ACCOUNTS.equals(account)) {
+            sortedStream = sortedStream.filter(payment -> account.equals(payment.account));
+        }
+        final var sorted = sortedStream
                 .sorted(Comparator.comparing(a -> a.effectiveDate))
                 .toList();
+
         for (final var payment : sorted) {
             if (payment.effectiveDate.isBefore(startDate.get().atStartOfDay())) {
                 continue;
@@ -238,6 +273,21 @@ public class EvaluationView extends BakaTab {
 
     @Override
     protected void onTabActivated() {
+        final var oldSelection = accountFilter.getSelectionModel().getSelectedItem();
+
+        accounts.clear();
+        // null is the all item
+        accounts.add(ALL_ACCOUNTS);
+        accounts.addAll(state.data.accounts);
+
+        final var oldSelectionIndex = accountFilter.getItems().indexOf(oldSelection);
+        if (oldSelectionIndex != -1) {
+            accountFilter.getSelectionModel().select(oldSelectionIndex);
+        } else {
+            // null is the all item
+            accountFilter.getSelectionModel().select(ALL_ACCOUNTS);
+        }
+
         updateCharts();
     }
 
