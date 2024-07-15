@@ -117,8 +117,9 @@ public class ClassificationsView extends BakaTab {
             state.data.classificationRules.set(index, state.data.classificationRules.get(index - 1));
             state.data.classificationRules.set(index - 1, selectedClassification.rule);
 
-            // FIXME delta change
-            listView.getItems().setAll(convertRules(state.data.classificationRules));
+            final int oldViewIndex = listView.getItems().indexOf(selectedClassification);
+            listView.getItems().set(oldViewIndex, listView.getItems().get(oldViewIndex - 1));
+            listView.getItems().set(index - 1, selectedClassification);
             listView.getSelectionModel().select(selectedClassification);
         });
         final var downButton = new Button("↓");
@@ -136,8 +137,9 @@ public class ClassificationsView extends BakaTab {
             state.data.classificationRules.set(index, state.data.classificationRules.get(index + 1));
             state.data.classificationRules.set(index + 1, selectedClassification.rule);
 
-            // FIXME delta change
-            listView.getItems().setAll(convertRules(state.data.classificationRules));
+            final int oldViewIndex = listView.getItems().indexOf(selectedClassification);
+            listView.getItems().set(oldViewIndex, listView.getItems().get(oldViewIndex + 1));
+            listView.getItems().set(index + 1, selectedClassification);
             listView.getSelectionModel().select(selectedClassification);
         });
         final var listViewButtons = new HBox(
