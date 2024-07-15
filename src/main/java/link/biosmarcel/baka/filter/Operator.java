@@ -5,5 +5,7 @@ public enum Operator {
     NOT_EQ,
     HAS,
     LT,
+    LT_EQ,
     GT,
+    GT_EQ,
 }

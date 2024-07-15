@@ -127,6 +127,10 @@ public class Filter<FilterTarget> implements Predicate<FilterTarget> {
                 final Operator operator = switch (ctx.operator.getText()) {
                     case "=" -> Operator.EQ;
                     case "!=" -> Operator.NOT_EQ;
+                    case ">" -> Operator.GT;
+                    case "<" -> Operator.LT;
+                    case ">=" -> Operator.GT_EQ;
+                    case "<=" -> Operator.LT_EQ;
                     case "contains", "has" -> Operator.HAS;
                     default -> throw new UnsupportedOperationException("Unknown operator: " + ctx.operator.getText());
                 };
