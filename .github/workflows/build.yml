@@ -25,7 +25,7 @@ jobs:
       - name: Build artifact
         shell: bash
         run: |
-          ./mvnw dependency:get -Dartifact="org.antlr:antlr4-runtime:4.13.1:jar"
+          ./mvnw -f antlr.xml dependency:get -Dartifact="org.antlr:antlr4-runtime:4.13.1:jar"
           ./mvnw -f antlr.xml generate-resources
           ./mvnw compile package javafx:jlink jpackage:jpackage
 
