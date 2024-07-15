@@ -25,7 +25,9 @@ jobs:
       - name: Build artifact
         shell: bash
         run: |
-          ./mvnw compile javafx:jlink jpackage:jpackage
+          ./mvnw -f antlr.xml dependency:get -Dartifact="org.antlr:antlr4-runtime:4.13.1:jar"
+          ./mvnw -f antlr.xml generate-resources
+          ./mvnw compile package javafx:jlink jpackage:jpackage
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4

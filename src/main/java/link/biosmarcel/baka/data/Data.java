@@ -15,6 +15,8 @@ public class Data {
 
     public List<Account> accounts = new ArrayList<>();
 
+    public List<ClassificationRule> classificationRules = new ArrayList<>();
+
     /**
      * Import payments will add new payments to the data, if the data doesn't already exist.
      *
@@ -51,7 +53,7 @@ public class Data {
 
         final Map<Payment, Payment> possibleDuplicates = new HashMap<>();
         OUTER_LOOP:
-        for (final var newPayment : newPayments) {
+        for (final var newPayment : filteredPayments) {
             for (int i = payments.size() - 1; i >= 0; i--) {
                 final var existingPayment = payments.get(i);
                 if (newPayment.bookingDate.isBefore(existingPayment.bookingDate)) {

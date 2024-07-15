@@ -1,15 +1,19 @@
 package link.biosmarcel.baka.view;
 
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.collections.transformation.FilteredList;
+import javafx.collections.transformation.SortedList;
 import javafx.geometry.Insets;
-import javafx.scene.control.MenuButton;
-import javafx.scene.control.MenuItem;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableView;
+import javafx.scene.control.*;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import link.biosmarcel.baka.ApplicationState;
 import link.biosmarcel.baka.data.Account;
+import link.biosmarcel.baka.data.Classification;
 import link.biosmarcel.baka.data.Payment;
 
 import java.io.File;
@@ -24,6 +28,8 @@ public class PaymentsView extends BakaTab {
     private final TableView<PaymentFX> table;
     private final PaymentDetails details;
     private final MenuButton importButton;
+    private final ObservableList<PaymentFX> data = FXCollections.observableArrayList();
+    private final FilteredList<PaymentFX> filteredData = new FilteredList<>(data);
 
     public PaymentsView(ApplicationState state) {
         super("Payments", state);
@@ -63,17 +69,33 @@ public class PaymentsView extends BakaTab {
                 accountColumn
         );
         table.getSortOrder().add(effectiveDateColumn);
+        SortedList<PaymentFX> sortableData = new SortedList<>(filteredData);
+        sortableData.comparatorProperty().bind(table.comparatorProperty());
+        table.setItems(sortableData);
 
         importButton = new MenuButton("Import");
+        final var classifyButton = new Button("Apply Classification Rules");
+        classifyButton.setOnAction(_ -> classifyAllUnclassified());
 
         details = new PaymentDetails(state);
 
+        final TextField filterField = new TextField();
+        final var filter = new PaymentFilter();
+        filterField.setPrefColumnCount(30);
+        filterField.textProperty().addListener((_, _, newText) -> {
+            if (filter.setQuery(newText)) {
+                filteredData.setPredicate(paymentFX -> filter.test(paymentFX.payment));
+            }
+        });
+
+        final var topBarCenterSpacer = new Region();
         final var layout = new VBox(
-                importButton,
+                new HBox(2.5, importButton, classifyButton, topBarCenterSpacer, filterField),
                 table,
                 details
         );
         layout.setSpacing(10.0);
+        HBox.setHgrow(topBarCenterSpacer, Priority.ALWAYS);
 
         layout.setPadding(new Insets(10, 10, 10, 10));
         layout.setFillWidth(true);
@@ -82,6 +104,26 @@ public class PaymentsView extends BakaTab {
         setContent(layout);
     }
 
+    private void classifyAllUnclassified() {
+        for (final var payment : state.data.payments) {
+            if (payment.classifications.isEmpty() && payment.amount.doubleValue() < 0.0) {
+                System.out.println(payment.name + " / " + payment.reference);
+                for (final var rule : state.data.classificationRules) {
+                    if (rule.test(payment)) {
+                        final var classification = new Classification();
+                        classification.tag = rule.tag;
+                        classification.amount = payment.amount;
+                        payment.classifications.add(classification);
+                        state.storer.store(payment.classifications);
+                        state.storer.store(payment);
+                        break;
+                    }
+                }
+            }
+        }
+
+        data.setAll(convertPayments(state.data.payments));
+    }
 
     private void importHandler(final Account account, final BiFunction<Account, File, List<Payment>> importer) {
         final var file = new FileChooser().showOpenDialog(getTabPane().getScene().getWindow());
@@ -106,7 +148,8 @@ public class PaymentsView extends BakaTab {
 
         state.storer.store(state.data);
         state.storer.commit();
-        table.getItems().addAll(convertPayments(newPayments));
+        // We call setALl, as we aren't aware of what was filtered.
+        data.setAll(convertPayments(state.data.payments));
         // Even with active sorting, the table won't sort automatically.
         table.sort();
     }
@@ -121,7 +164,7 @@ public class PaymentsView extends BakaTab {
 
     @Override
     protected void onTabActivated() {
-        table.getItems().setAll(convertPayments(state.data.payments));
+        data.setAll(convertPayments(state.data.payments));
         table.sort();
 
         details.activePayment.bind(table.getSelectionModel().selectedItemProperty());
@@ -144,7 +187,7 @@ public class PaymentsView extends BakaTab {
     protected void onTabDeactivated() {
         details.activePayment.unbind();
 
-        table.getItems().clear();
+        data.clear();
         importButton.getItems().clear();
     }
 }

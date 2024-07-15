@@ -4,6 +4,8 @@ module link.biosmarcel.baka {
     requires org.apache.commons.csv;
     requires org.eclipse.store.storage.embedded.configuration;
     requires org.jspecify;
+    requires org.antlr.antlr4.runtime;
+    requires java.desktop;
 
     exports link.biosmarcel.baka;
     exports link.biosmarcel.baka.bankimport;

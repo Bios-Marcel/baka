@@ -7,9 +7,7 @@ import javafx.scene.control.TabPane;
 import javafx.scene.image.Image;
 import javafx.stage.Stage;
 import link.biosmarcel.baka.data.Data;
-import link.biosmarcel.baka.view.AccountsView;
-import link.biosmarcel.baka.view.EvaluationView;
-import link.biosmarcel.baka.view.PaymentsView;
+import link.biosmarcel.baka.view.*;
 import org.eclipse.store.storage.embedded.configuration.types.EmbeddedStorageConfiguration;
 
 import java.nio.file.Path;
@@ -29,8 +27,8 @@ public class Main extends Application {
         final Data data = new Data();
         final var storageManager = EmbeddedStorageConfiguration
                 .Builder()
-                .setStorageDirectory(getDataDir("storage").toString())
-                .setBackupDirectory(getDataDir("backup").toString())
+                .setStorageDirectory(getDataDir("storage_temp").toString())
+                .setBackupDirectory(getDataDir("backup_temp").toString())
                 .setChannelCount(1)
                 .createEmbeddedStorageFoundation()
                 //.onConnectionFoundation((connection) -> {
@@ -46,24 +44,32 @@ public class Main extends Application {
 
         ApplicationState state = new ApplicationState(storageManager, storageManager.createEagerStorer(), data);
 
+//        data.payments.clear();
+//        storageManager.store(data);
+
         TabPane tabs = new TabPane(
                 new PaymentsView(state),
                 new AccountsView(state),
-                new EvaluationView(state)
+                new EvaluationView(state),
+                new ClassificationsView(state)
         );
         tabs.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
 
         Scene scene = new Scene(tabs, 800, 600);
         scene.getStylesheets().add(Objects.requireNonNull(Main.class.getResource("base.css")).toExternalForm());
         stage.setTitle("Baka");
-        stage.getIcons().add(new Image(getClass().getResourceAsStream("icon.png")));
+        stage.getIcons().add(new Image(Objects.requireNonNull(getClass().getResourceAsStream("icon.png"))));
         stage.setScene(scene);
 
         // FIXME This seems dumb?
         Platform.setImplicitExit(true);
-        stage.setOnCloseRequest((ae) -> {
+        stage.setOnCloseRequest(_ -> {
+            // Triggers onTabDeactivate
+            ((BakaTab) tabs.getSelectionModel().getSelectedItem()).save();
+
+            // Not shutting down might result in data loss
+            storageManager.shutdown();
             Platform.exit();
-            System.exit(0);
         });
 
         stage.sizeToScene();

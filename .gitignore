@@ -40,4 +40,5 @@ build/
 # Microstream (EclipseStore)
 storage/
 
-
+# Generated code
+/gen

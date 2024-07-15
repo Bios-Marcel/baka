@@ -24,6 +24,20 @@
             <version>22-ea+11</version>
         </dependency>
 
+        <!-- Used for filtering language parser -->
+        <dependency>
+            <groupId>org.antlr</groupId>
+            <artifactId>antlr4-runtime</artifactId>
+            <version>4.13.1</version>
+            <!--
+                Due to the fact that the antlr people are not adding a Java module and Java 21+ not supporting
+                automatic modules anymore, we are using moditect to generate a module, which we then specify as a direct
+                file system dependency.
+            -->
+            <scope>system</scope>
+            <systemPath>${project.build.directory}/modules/antlr4-runtime-4.13.1.jar</systemPath>
+        </dependency>
+
         <!-- Nullness annotations -->
         <dependency>
             <groupId>org.jspecify</groupId>
@@ -66,55 +80,19 @@
 
     <build>
         <plugins>
-            <!--            <plugin>-->
-            <!--                <groupId>org.graalvm.buildtools</groupId>-->
-            <!--                <artifactId>native-maven-plugin</artifactId>-->
-            <!--                <version>0.10.2</version>-->
-            <!--                <extensions>true</extensions>-->
-            <!--                <executions>-->
-            <!--                    <execution>-->
-            <!--                        <id>build-native</id>-->
-            <!--                        <goals>-->
-            <!--                            <goal>compile-no-fork</goal>-->
-            <!--                        </goals>-->
-            <!--                        <phase>package</phase>-->
-            <!--                    </execution>-->
-            <!--                    <execution>-->
-            <!--                        <id>test-native</id>-->
-            <!--                        <goals>-->
-            <!--                            <goal>test</goal>-->
-            <!--                        </goals>-->
-            <!--                        <phase>test</phase>-->
-            <!--                    </execution>-->
-            <!--                </executions>-->
-            <!--                <configuration>-->
-            <!--                    <mainClass>${mainClass}</mainClass>-->
-            <!--                    <agent>-->
-            <!--                        <enabled>true</enabled>-->
-            <!--                    </agent>-->
-            <!--                </configuration>-->
-            <!--            </plugin>-->
-            <!--            <plugin>-->
-            <!--                <groupId>org.apache.maven.plugins</groupId>-->
-            <!--                <artifactId>maven-shade-plugin</artifactId>-->
-            <!--                <version>3.6.0</version>-->
-            <!--                <executions>-->
-            <!--                    <execution>-->
-            <!--                        <phase>package</phase>-->
-            <!--                        <goals>-->
-            <!--                            <goal>shade</goal>-->
-            <!--                        </goals>-->
-            <!--                        <configuration>-->
-            <!--                            <transformers>-->
-            <!--                                <transformer-->
-            <!--                                        implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">-->
-            <!--                                    <mainClass>${mainClass}</mainClass>-->
-            <!--                                </transformer>-->
-            <!--                            </transformers>-->
-            <!--                        </configuration>-->
-            <!--                    </execution>-->
-            <!--                </executions>-->
-            <!--            </plugin>-->
+            <plugin>
+                <!-- https://mvnrepository.com/artifact/org.antlr/antlr4-maven-plugin -->
+                <groupId>org.antlr</groupId>
+                <artifactId>antlr4-maven-plugin</artifactId>
+                <version>4.13.1</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>antlr4</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -123,6 +101,44 @@
                     <source>22</source>
                     <target>22</target>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.moditect</groupId>
+                <artifactId>moditect-maven-plugin</artifactId>
+                <version>1.2.2.Final</version>
+                <executions>
+                    <execution>
+                        <id>add-module-infos</id>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>add-module-info</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.directory}/modules</outputDirectory>
+                            <overwriteExistingFiles>true</overwriteExistingFiles>
+                            <modules>
+                                <module>
+                                    <artifact>
+                                        <groupId>org.antlr</groupId>
+                                        <artifactId>antlr4-runtime</artifactId>
+                                        <version>4.13.1</version>
+                                    </artifact>
+                                    <moduleInfoSource>
+                                        module org.antlr.antlr4.runtime {
+                                        exports org.antlr.v4.runtime;
+                                        exports org.antlr.v4.runtime.atn;
+                                        exports org.antlr.v4.runtime.dfa;
+                                        exports org.antlr.v4.runtime.misc;
+                                        exports org.antlr.v4.runtime.tree;
+                                        exports org.antlr.v4.runtime.tree.pattern;
+                                        exports org.antlr.v4.runtime.tree.xpath;
+                                        }
+                                    </moduleInfoSource>
+                                </module>
+                            </modules>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
             <plugin>
                 <groupId>org.panteleyev</groupId>
