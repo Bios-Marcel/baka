@@ -5,13 +5,11 @@ import link.biosmarcel.baka.FilterParser;
 import link.biosmarcel.baka.FilterParserBaseListener;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.tree.ErrorNodeImpl;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.jspecify.annotations.Nullable;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -30,14 +28,8 @@ public class Filter<FilterTarget> implements Predicate<FilterTarget> {
                 .put(operator, new FieldData<>(predicate, convertString));
     }
 
-    public boolean setQuery(final String textQuery) {
-        try {
-            _setQuery(textQuery);
-            return true;
-        } catch (final RuntimeException exception) {
-            System.out.println("Failed to compile query: " + exception.getMessage());
-            return false;
-        }
+    public void setQuery(final String textQuery) {
+        _setQuery(textQuery);
     }
 
     private void _setQuery(final String textQuery) {
@@ -52,11 +44,13 @@ public class Filter<FilterTarget> implements Predicate<FilterTarget> {
         ParseTreeWalker.DEFAULT.walk(new FilterParserBaseListener() {
             @Override
             public void enterQuery(final FilterParser.QueryContext ctx) {
-                if (ctx.getRuleContext().getChildCount() == 2) {
-                    final Expression<FilterTarget> expression = new Expression<>();
-                    root.set(expression);
-                    contextToExpression.put(ctx, expression);
+                if (textQuery.isBlank()) {
+                    throw new IncompleteQueryException(true, "", fieldToOperatorToExtractor.keySet().stream().toList());
                 }
+
+                final Expression<FilterTarget> expression = new Expression<>();
+                root.set(expression);
+                contextToExpression.put(ctx, expression);
             }
 
             private void insertPredicate(final Expression<FilterTarget> expression, final Predicate<FilterTarget> predicate) {
@@ -71,10 +65,8 @@ public class Filter<FilterTarget> implements Predicate<FilterTarget> {
 
             @Override
             public void enterGroupedExpression(final FilterParser.GroupedExpressionContext ctx) {
-                for (final var child : ctx.children) {
-                    if (child instanceof ErrorNodeImpl) {
-                        throw new IllegalStateException("Query incomplete");
-                    }
+                if (ctx.getChild(1).getText().isBlank()) {
+                    throw new IncompleteQueryException(false, "", fieldToOperatorToExtractor.keySet().stream().toList());
                 }
 
                 var targetContext = contextToExpression.get(ctx.parent);
@@ -85,12 +77,6 @@ public class Filter<FilterTarget> implements Predicate<FilterTarget> {
 
             @Override
             public void enterBinaryExpression(final FilterParser.BinaryExpressionContext ctx) {
-                for (final var child : ctx.children) {
-                    if (child instanceof ErrorNodeImpl) {
-                        throw new IllegalStateException("Query incomplete");
-                    }
-                }
-
                 final var expression = new Expression<FilterTarget>();
                 if (ctx.operator.getText().equalsIgnoreCase("AND")) {
                     expression.binaryExpressionType = BinaryExpressionType.AND;
@@ -100,40 +86,51 @@ public class Filter<FilterTarget> implements Predicate<FilterTarget> {
                     throw new RuntimeException("Unknown Binary Operator");
                 }
 
+                if (ctx.getChildCount() == 3 && ctx.getChild(2).getText().isBlank()) {
+                    throw new IncompleteQueryException(false, "", fieldToOperatorToExtractor.keySet().stream().toList());
+                }
+
                 var targetContext = contextToExpression.get(ctx.parent);
 
                 contextToExpression.put(ctx, expression);
                 insertPredicate(targetContext, expression);
             }
 
+            private List<String> autocompleteOperators(final Collection<Operator> operators, final String text) {
+                final String textLowered = text.toLowerCase();
+                return operators
+                        .stream()
+                        .filter(operator -> operator.text.startsWith(textLowered))
+                        .map(op -> op.text)
+                        .sorted()
+                        .toList();
+            }
+
             @Override
             public void enterComparatorExpression(final FilterParser.ComparatorExpressionContext ctx) {
-                for (final var child : ctx.children) {
-                    if (child instanceof ErrorNodeImpl) {
-                        throw new IllegalStateException("Query incomplete");
-                    }
-                }
-
                 final var targetContext = contextToExpression.get(ctx.parent);
                 final var operatorToExtractor = fieldToOperatorToExtractor.get(ctx.field().getText());
                 if (operatorToExtractor == null) {
-                    throw new IllegalStateException("Field not registered: " + ctx.field().getText());
+                    throw new IncompleteQueryException(false,
+                            ctx.field().getText(),
+                            fieldToOperatorToExtractor.keySet()
+                                    .stream()
+                                    .filter(key -> key.startsWith(ctx.field().getText()))
+                                    .toList());
                 }
 
                 if (ctx.children.size() <= 1) {
-                    throw new IllegalStateException("missing operator");
+                    throw new IncompleteQueryException(false, "", autocompleteOperators(operatorToExtractor.keySet(), ""));
                 }
 
-                final Operator operator = switch (ctx.operator.getText()) {
-                    case "=" -> Operator.EQ;
-                    case "!=" -> Operator.NOT_EQ;
-                    case ">" -> Operator.GT;
-                    case "<" -> Operator.LT;
-                    case ">=" -> Operator.GT_EQ;
-                    case "<=" -> Operator.LT_EQ;
-                    case "contains", "has" -> Operator.HAS;
-                    default -> throw new UnsupportedOperationException("Unknown operator: " + ctx.operator.getText());
-                };
+                final Operator operator = Operator.match(ctx.operator.getText());
+                if (operator == null) {
+                    throw new IncompleteQueryException(
+                            false,
+                            ctx.getChild(1).getText(),
+                            autocompleteOperators(operatorToExtractor.keySet(), ctx.getChild(1).getText()));
+                }
+
                 final FieldData<FilterTarget, Object> extractor = (FieldData<FilterTarget, Object>) operatorToExtractor.get(operator);
                 if (extractor == null) {
                     throw new IllegalStateException("Extractor not registered: " + ctx.field().getText() + "." + ctx.operator.getText());
@@ -142,7 +139,7 @@ public class Filter<FilterTarget> implements Predicate<FilterTarget> {
                 final var value = ctx.value();
                 String unquoted = value.getText();
                 if (unquoted.isBlank()) {
-                    throw new IllegalStateException("missing value");
+                    throw new IncompleteQueryException(false, unquoted, Collections.EMPTY_LIST);
                 }
 
                 final var stringToken = value.STRING();

@@ -18,7 +18,9 @@ public class ClassificationRule {
     public boolean test(final Payment payment) {
         if (compiled == null) {
             compiled = new PaymentFilter();
-            if (!compiled.setQuery(query)) {
+            try {
+                compiled.setQuery(query);
+            } catch (final RuntimeException exception) {
                 return false;
             }
         }

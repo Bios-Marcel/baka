@@ -15,12 +15,14 @@ import link.biosmarcel.baka.ApplicationState;
 import link.biosmarcel.baka.data.Account;
 import link.biosmarcel.baka.data.Classification;
 import link.biosmarcel.baka.data.Payment;
+import link.biosmarcel.baka.filter.IncompleteQueryException;
 
 import java.io.File;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.BiFunction;
 
@@ -79,18 +81,34 @@ public class PaymentsView extends BakaTab {
 
         details = new PaymentDetails(state);
 
-        final TextField filterField = new TextField();
+        // FIXME Can we make parts reusable?
+        final var autocompleteFilter = new PaymentFilter();
+        final var filterField = new AutocompleteField((value) -> {
+            try {
+                autocompleteFilter.setQuery(value);
+                return Collections.EMPTY_LIST;
+            } catch (final IncompleteQueryException exception) {
+                return exception.options;
+            } catch (final RuntimeException exception) {
+                return Collections.EMPTY_LIST;
+            }
+        });
         final var filter = new PaymentFilter();
-        filterField.setPrefColumnCount(30);
         filterField.textProperty().addListener((_, _, newText) -> {
-            if (filter.setQuery(newText)) {
+            try {
+                filter.setQuery(newText);
                 filteredData.setPredicate(paymentFX -> filter.test(paymentFX.payment));
+            } catch (final IncompleteQueryException exception) {
+                if (exception.empty) {
+                    filteredData.setPredicate(null);
+                }
+                // If the query is not empty, but incomplete, it isn't really an issue.
             }
         });
 
         final var topBarCenterSpacer = new Region();
         final var layout = new VBox(
-                new HBox(2.5, importButton, classifyButton, topBarCenterSpacer, filterField),
+                new HBox(2.5, importButton, classifyButton, topBarCenterSpacer, filterField.getNode()),
                 table,
                 details
         );

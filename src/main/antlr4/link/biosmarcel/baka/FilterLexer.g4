@@ -18,5 +18,5 @@ NOT_EQ:                    '!=';
 STRING:                    ["].*?["];
 BOOLEAN:                   ('true'|'false');
 NUMBER:                    [,.0-9]+;
-WORD:                      ~[ \u000B\t\r\n"]+;
+WORD:                      ~[() \u000B\t\r\n"]+;
 SPACES:                    [ \u000B\t\r\n] -> channel(HIDDEN);
