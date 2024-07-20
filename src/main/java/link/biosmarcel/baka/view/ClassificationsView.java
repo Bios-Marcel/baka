@@ -47,7 +47,10 @@ public class ClassificationsView extends BakaTab {
         selectedRuleProperty = listView.getSelectionModel().selectedItemProperty();
         nameField = new TextField();
         tagField = new TextField();
-        queryField = new AutocompleteTextArea(new FilterAutocompleteGenerator(new PaymentFilter())::generate);
+        queryField = new AutocompleteTextArea(
+                new char[]{')', '(', ' ', '\n'},
+                new FilterAutocompleteGenerator(new PaymentFilter())::generate
+        );
 
         final BooleanBinding disableInputs = Bindings.createBooleanBinding(() -> selectedRuleProperty.getValue() == null, selectedRuleProperty);
         selectedRuleProperty.addListener((_, oldValue, newValue) -> {

@@ -9,8 +9,10 @@ import java.util.List;
 import java.util.function.Function;
 
 public class AutocompleteField extends AutocompleteInput {
-    public AutocompleteField(Function<String, List<String>> autocompleteGenerator) {
-        super(autocompleteGenerator);
+    public AutocompleteField(
+            final char[] tokenSeparators,
+            final Function<String, List<String>> autocompleteGenerator) {
+        super(tokenSeparators, autocompleteGenerator);
     }
 
     @Override

@@ -81,7 +81,10 @@ public class PaymentsView extends BakaTab {
 
         details = new PaymentDetails(state);
 
-        final var filterField = new AutocompleteField(new FilterAutocompleteGenerator(new PaymentFilter())::generate);
+        final var filterField = new AutocompleteField(
+                new char[]{')', '(', ' ', '\n'},
+                new FilterAutocompleteGenerator(new PaymentFilter())::generate
+        );
         final var filter = new PaymentFilter();
         filterField.textProperty().addListener((_, _, newText) -> {
             try {

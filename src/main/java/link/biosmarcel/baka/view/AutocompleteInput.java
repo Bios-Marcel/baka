@@ -22,13 +22,17 @@ public abstract class AutocompleteInput {
     private final Pane pane;
     private final ListView<String> completionList;
     private final Function<String, List<String>> autocompleteGenerator;
+    private final char[] tokenSeparators;
 
     protected final TextInputControl input;
 
-    public AutocompleteInput(final Function<String, List<String>> autocompleteGenerator) {
+    public AutocompleteInput(
+            final char[] tokenSeparators,
+            final Function<String, List<String>> autocompleteGenerator) {
         pane = new Pane();
         input = createInput();
         completionList = new ListView<>();
+        this.tokenSeparators = tokenSeparators;
         this.autocompleteGenerator = autocompleteGenerator;
 
         // This is what is the Z-Index on the web. It allows us to render our popup above everything else.
@@ -108,8 +112,6 @@ public abstract class AutocompleteInput {
         return input.isFocused() && !input.isDisabled();
     }
 
-    private static final char[] autocompleteAfterChars = new char[]{')', '(', ' ', '\n'};
-
     private void complete() {
         final String selectedItem = completionList.getSelectionModel().getSelectedItem();
         // selection is always nullable
@@ -121,7 +123,7 @@ public abstract class AutocompleteInput {
         final var textBeforeCaret = input.getText().substring(0, input.getCaretPosition());
 
         int autocompleteTo = -1;
-        for (final char c : autocompleteAfterChars) {
+        for (final char c : tokenSeparators) {
             autocompleteTo = Integer.max(textBeforeCaret.lastIndexOf(c), autocompleteTo);
         }
 

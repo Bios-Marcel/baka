@@ -9,8 +9,11 @@ import java.util.List;
 import java.util.function.Function;
 
 public class AutocompleteTextArea extends AutocompleteInput {
-    public AutocompleteTextArea(Function<String, List<String>> autocompleteGenerator) {
-        super(autocompleteGenerator);
+    public AutocompleteTextArea(
+            final char[] tokenSeparators,
+            final Function<String, List<String>> autocompleteGenerator
+    ) {
+        super(tokenSeparators, autocompleteGenerator);
     }
 
     @Override
