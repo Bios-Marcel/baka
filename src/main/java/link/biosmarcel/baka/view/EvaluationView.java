@@ -243,6 +243,15 @@ public class EvaluationView extends BakaTab {
             final XYChart.Series<String, Number> categorySeries = new XYChart.Series<>();
             categorySeries.setName(category.getKey());
 
+            // Hack to ensure that the order is correct in case there are any month values missing for a month, in which
+            // case we can get incorrectly sorted months.
+            for (var month = startDate.get().getMonth(); month.getValue() <= endDate.get().getMonth().getValue(); month = month.plus(1)) {
+                categorySeries.getData().add(new XYChart.Data<>(
+                        renderMonth(month),
+                        0
+                ));
+            }
+
             for (final var monthToAmount : Objects.requireNonNull(category.getValue()).entrySet()) {
                 categorySeries.getData().add(new XYChart.Data<>(
                         renderMonth(monthToAmount.getKey()),
