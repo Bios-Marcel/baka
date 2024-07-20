@@ -60,8 +60,13 @@ public abstract class AutocompleteInput {
         });
 
         input.addEventHandler(KeyEvent.KEY_PRESSED, event -> {
-            // FIXME Ctrl+Home/End
-            if (event.getCode() == KeyCode.UP) {
+            if (event.getCode() == KeyCode.HOME && event.isControlDown()) {
+                event.consume();
+                completionList.getSelectionModel().select(0);
+            } else if (event.getCode() == KeyCode.END && event.isControlDown()) {
+                event.consume();
+                completionList.getSelectionModel().select(completionList.getItems().size() - 1);
+            } else if (event.getCode() == KeyCode.UP) {
                 event.consume();
                 if (completionList.getSelectionModel().getSelectedIndex() != 0) {
                     completionList.getSelectionModel().select(completionList.getSelectionModel().getSelectedIndex() + -1);
