@@ -69,11 +69,11 @@ public abstract class AutocompleteInput {
             } else if (event.getCode() == KeyCode.UP) {
                 event.consume();
                 if (completionList.getSelectionModel().getSelectedIndex() != 0) {
-                    completionList.getSelectionModel().select(completionList.getSelectionModel().getSelectedIndex() + -1);
+                    completionList.getSelectionModel().select(completionList.getSelectionModel().getSelectedIndex() - 1);
                 }
             } else if (event.getCode() == KeyCode.DOWN) {
                 event.consume();
-                completionList.getSelectionModel().select(completionList.getSelectionModel().getSelectedIndex() - -1);
+                completionList.getSelectionModel().select(completionList.getSelectionModel().getSelectedIndex() + 1);
             } else if (event.getCode() == KeyCode.ENTER) {
                 if (event.isShiftDown()) {
                     input.insertText(input.getCaretPosition(), "\n");
