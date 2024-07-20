@@ -105,25 +105,39 @@ public abstract class AutocompleteInput {
         final String selectedItem = completionList.getSelectionModel().getSelectedItem();
         // selection is always nullable
         //noinspection ConstantValue
-        if (selectedItem != null) {
-            final var textBeforeCaret = input.getText().substring(0, input.getCaretPosition());
-
-            int autocompleteTo = -1;
-            for (final char c : autocompleteAfterChars) {
-                autocompleteTo = Integer.max(textBeforeCaret.lastIndexOf(c), autocompleteTo);
-            }
-            final var preCompletionText = textBeforeCaret.substring(0, autocompleteTo + 1);
-
-            // Make sure that we have a space after either open or closed parenthesis.
-            String textToInsert = selectedItem + " ";
-            if (autocompleteTo != -1 && !Character.isWhitespace(textBeforeCaret.charAt(autocompleteTo))) {
-                textToInsert = " " + textToInsert;
-            }
-
-            input.setText(preCompletionText + textToInsert + input.getText().substring(input.getCaretPosition()));
-            // We add a space at the end, so we can start writing / completing the next token type right away.
-            input.positionCaret(preCompletionText.length() + selectedItem.length() + 1);
+        if (selectedItem == null) {
+            return;
         }
+
+        final var textBeforeCaret = input.getText().substring(0, input.getCaretPosition());
+
+        int autocompleteTo = -1;
+        for (final char c : autocompleteAfterChars) {
+            autocompleteTo = Integer.max(textBeforeCaret.lastIndexOf(c), autocompleteTo);
+        }
+
+        final var completable = textBeforeCaret.substring(autocompleteTo + 1);
+        String textToInsert = selectedItem.substring(completable.length()) + " ";
+
+        if (input.getSelection().getLength() > 0) {
+            input.replaceSelection(textToInsert);
+            return;
+        }
+
+        // If the word to completed is already there, we simply move the cursor. This can happen if
+        // the cursor is moved into the middle of word.
+        if (input.getText().substring(input.getCaretPosition()).startsWith(textToInsert)) {
+            input.positionCaret(input.getCaretPosition() + textToInsert.length());
+            return;
+        }
+
+        // Make sure that we have a space after either open or closed parenthesis.
+        if (autocompleteTo != -1 && !Character.isWhitespace(textBeforeCaret.charAt(autocompleteTo))) {
+            textToInsert = " " + textToInsert;
+        }
+
+        // We use insert instead of setText, as this will correctly update the cursor position.
+        input.insertText(input.getCaretPosition(), textToInsert);
     }
 
     private void updatePopupItems(final Collection<String> newItems) {
