@@ -1,5 +1,9 @@
 package link.biosmarcel.baka.view;
 
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
@@ -86,15 +90,28 @@ public class PaymentsView extends BakaTab {
                 new FilterAutocompleteGenerator(new PaymentFilter())::generate
         );
         final var filter = new PaymentFilter();
+
+        StringProperty filterError = new SimpleStringProperty();
+        BooleanProperty fatalError = new SimpleBooleanProperty();
+        AutocompleteHelper.installErrorToolTip(filterField, filterError, fatalError);
+
         filterField.textProperty().addListener((_, _, newText) -> {
             try {
+                filterError.set("");
+                fatalError.set(false);
                 filter.setQuery(newText);
                 filteredData.setPredicate(paymentFX -> filter.test(paymentFX.payment));
             } catch (final IncompleteQueryException exception) {
                 if (exception.empty) {
                     filteredData.setPredicate(null);
+                } else {
+                    filterError.set("Query is incomplete.");
+                    fatalError.set(false);
                 }
                 // If the query is not empty, but incomplete, it isn't really an issue.
+            } catch (final RuntimeException exception) {
+                filterError.set(exception.getMessage());
+                fatalError.set(true);
             }
         });
 

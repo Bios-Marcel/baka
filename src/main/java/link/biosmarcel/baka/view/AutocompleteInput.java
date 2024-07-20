@@ -1,6 +1,7 @@
 package link.biosmarcel.baka.view;
 
 import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.StringProperty;
 import javafx.geometry.Point2D;
 import javafx.scene.Node;
@@ -11,6 +12,7 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.Pane;
+import javafx.scene.layout.Region;
 import javafx.scene.paint.Color;
 import org.jspecify.annotations.Nullable;
 
@@ -212,6 +214,20 @@ public abstract class AutocompleteInput {
         return input.disableProperty();
     }
 
+    public ReadOnlyBooleanProperty focusedProperty() {
+        return input.focusedProperty();
+    }
+
+    public void clearError() {
+        input.getStyleClass().remove("text-field-error");
+    }
+
+    public void indicateError() {
+        // Prevent adding class twice.
+        clearError();
+        input.getStyleClass().add("text-field-error");
+    }
+
     private void toFront(Node node) {
         node.setViewOrder(-1);
         if (node.getParent() != null) {
@@ -219,7 +235,7 @@ public abstract class AutocompleteInput {
         }
     }
 
-    public Node getNode() {
+    public Region getNode() {
         return pane;
     }
 

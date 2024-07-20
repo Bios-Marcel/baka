@@ -3,7 +3,7 @@ package link.biosmarcel.baka.view;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.BooleanBinding;
-import javafx.beans.property.ReadOnlyObjectProperty;
+import javafx.beans.property.*;
 import javafx.geometry.Insets;
 import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
@@ -11,6 +11,7 @@ import javafx.scene.layout.HBox;
 import link.biosmarcel.baka.ApplicationState;
 import link.biosmarcel.baka.data.ClassificationRule;
 import link.biosmarcel.baka.filter.FilterAutocompleteGenerator;
+import link.biosmarcel.baka.filter.IncompleteQueryException;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -47,10 +48,33 @@ public class ClassificationsView extends BakaTab {
         selectedRuleProperty = listView.getSelectionModel().selectedItemProperty();
         nameField = new TextField();
         tagField = new TextField();
+
+        final PaymentFilter filter = new PaymentFilter();
         queryField = new AutocompleteTextArea(
                 new char[]{')', '(', ' ', '\n'},
-                new FilterAutocompleteGenerator(new PaymentFilter())::generate
+                new FilterAutocompleteGenerator(filter)::generate
         );
+
+        StringProperty filterError = new SimpleStringProperty();
+        BooleanProperty fatalError = new SimpleBooleanProperty();
+        AutocompleteHelper.installErrorToolTip(queryField, filterError, fatalError);
+
+        queryField.textProperty().addListener((_, _, newText) -> {
+            try {
+                filterError.set("");
+                fatalError.set(false);
+                filter.setQuery(newText);
+            } catch (final IncompleteQueryException exception) {
+                if (!exception.empty) {
+                    filterError.set("Query is incomplete.");
+                    fatalError.set(false);
+                }
+                // If the query is not empty, but incomplete, it isn't really an issue.
+            } catch (final RuntimeException exception) {
+                filterError.set(exception.getMessage());
+                fatalError.set(true);
+            }
+        });
 
         final BooleanBinding disableInputs = Bindings.createBooleanBinding(() -> selectedRuleProperty.getValue() == null, selectedRuleProperty);
         selectedRuleProperty.addListener((_, oldValue, newValue) -> {
