@@ -2,6 +2,7 @@ package link.biosmarcel.baka.view;
 
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.StringProperty;
+import javafx.geometry.Point2D;
 import javafx.scene.Node;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
@@ -19,13 +20,16 @@ import java.util.function.Function;
 
 public abstract class AutocompleteInput {
     private final Pane pane;
-    public final TextInputControl input;
-    protected final ListView<String> completionList;
+    private final ListView<String> completionList;
+    private final Function<String, List<String>> autocompleteGenerator;
 
-    public AutocompleteInput(Function<String, List<String>> autocompleteGenerator) {
+    protected final TextInputControl input;
+
+    public AutocompleteInput(final Function<String, List<String>> autocompleteGenerator) {
         pane = new Pane();
         input = createInput();
         completionList = new ListView<>();
+        this.autocompleteGenerator = autocompleteGenerator;
 
         // This is what is the Z-Index on the web. It allows us to render our popup above everything else.
         pane.getChildren().add(input);
@@ -81,16 +85,15 @@ public abstract class AutocompleteInput {
                 return;
             }
 
-            updatePopupItems(autocompleteGenerator.apply(input.getText().substring(0, input.getCaretPosition())));
             refreshPopup();
         });
 
-        input.caretPositionProperty().addListener((_, _, newValue) -> {
+        input.caretPositionProperty().addListener((_, _, _) -> {
             if (!canShowPopup()) {
+                hidePopup();
                 return;
             }
 
-            updatePopupItems(autocompleteGenerator.apply(input.getText().substring(0, newValue.intValue())));
             refreshPopup();
         });
     }
@@ -150,11 +153,12 @@ public abstract class AutocompleteInput {
         completionList.getItems().sort(String::compareTo);
     }
 
-    public void hidePopup() {
+    private void hidePopup() {
         completionList.setVisible(false);
     }
 
-    public void refreshPopup() {
+    private void refreshPopup() {
+        updatePopupItems(autocompleteGenerator.apply(input.getText().substring(0, input.getCaretPosition())));
         if (completionList.getItems().isEmpty()) {
             hidePopup();
             return;
@@ -166,7 +170,9 @@ public abstract class AutocompleteInput {
         }
 
         completionList.setPrefHeight(completionList.getItems().size() * completionList.getFixedCellSize() + 2);
-        positionPopup();
+        final var location = computePopupLocation();
+        completionList.setTranslateX(location.getX());
+        completionList.setTranslateY(location.getY());
         toFront(completionList);
 
         completionList.setVisible(true);
@@ -191,7 +197,7 @@ public abstract class AutocompleteInput {
         return pane;
     }
 
-    abstract void positionPopup();
+    abstract Point2D computePopupLocation();
 
     abstract TextInputControl createInput();
 }

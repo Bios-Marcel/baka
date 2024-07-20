@@ -1,5 +1,6 @@
 package link.biosmarcel.baka.view;
 
+import javafx.geometry.Point2D;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TextInputControl;
 import javafx.scene.control.skin.TextFieldSkin;
@@ -13,12 +14,10 @@ public class AutocompleteField extends AutocompleteInput {
     }
 
     @Override
-    void positionPopup() {
+    Point2D computePopupLocation() {
         final var textFieldBounds = input.getBoundsInParent();
-        completionList.setTranslateY(textFieldBounds.getMaxY());
-
         final var caretBounds = ((TextFieldSkin) input.getSkin()).getCharacterBounds(input.getCaretPosition());
-        completionList.setTranslateX(textFieldBounds.getMinX() + caretBounds.getMinX());
+        return new Point2D(textFieldBounds.getMinX() + caretBounds.getMinX(), textFieldBounds.getMaxY());
     }
 
     @Override

@@ -1,5 +1,6 @@
 package link.biosmarcel.baka.view;
 
+import javafx.geometry.Point2D;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextInputControl;
 import javafx.scene.control.skin.TextAreaSkin;
@@ -13,13 +14,13 @@ public class AutocompleteTextArea extends AutocompleteInput {
     }
 
     @Override
-    void positionPopup() {
-        final var textFieldBounds = input.getBoundsInParent();
+    Point2D computePopupLocation() {
         // Required, as the bounds will be outdated otherwise.
         input.layout();
+
+        final var textFieldBounds = input.getBoundsInParent();
         final var bounds = ((TextAreaSkin) input.getSkin()).getCaretBounds();
-        completionList.setTranslateX(textFieldBounds.getMinX() + bounds.getMinX());
-        completionList.setTranslateY(textFieldBounds.getMinY() + bounds.getMaxY());
+        return new Point2D(textFieldBounds.getMinX() + bounds.getMinX(), textFieldBounds.getMinY() + bounds.getMaxY());
     }
 
     @Override
