@@ -1,17 +1,13 @@
-package link.biosmarcel.baka.view;
-
-import link.biosmarcel.baka.filter.BinaryExpressionType;
-import link.biosmarcel.baka.filter.Filter;
-import link.biosmarcel.baka.filter.IncompleteQueryException;
+package link.biosmarcel.baka.filter;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-public class AutocompleteGenerator {
+public class FilterAutocompleteGenerator {
     private final Filter<?> filter;
 
-    public AutocompleteGenerator(final Filter<?> filter) {
+    public FilterAutocompleteGenerator(final Filter<?> filter) {
         this.filter = filter;
     }
 

@@ -15,6 +15,7 @@ import link.biosmarcel.baka.ApplicationState;
 import link.biosmarcel.baka.data.Account;
 import link.biosmarcel.baka.data.Classification;
 import link.biosmarcel.baka.data.Payment;
+import link.biosmarcel.baka.filter.FilterAutocompleteGenerator;
 import link.biosmarcel.baka.filter.IncompleteQueryException;
 
 import java.io.File;
@@ -80,7 +81,7 @@ public class PaymentsView extends BakaTab {
 
         details = new PaymentDetails(state);
 
-        final var filterField = new AutocompleteField(new AutocompleteGenerator(new PaymentFilter())::generate);
+        final var filterField = new AutocompleteField(new FilterAutocompleteGenerator(new PaymentFilter())::generate);
         final var filter = new PaymentFilter();
         filterField.textProperty().addListener((_, _, newText) -> {
             try {

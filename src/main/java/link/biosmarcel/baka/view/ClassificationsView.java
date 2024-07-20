@@ -10,6 +10,7 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import link.biosmarcel.baka.ApplicationState;
 import link.biosmarcel.baka.data.ClassificationRule;
+import link.biosmarcel.baka.filter.FilterAutocompleteGenerator;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -46,7 +47,7 @@ public class ClassificationsView extends BakaTab {
         selectedRuleProperty = listView.getSelectionModel().selectedItemProperty();
         nameField = new TextField();
         tagField = new TextField();
-        queryField = new AutocompleteTextArea(new AutocompleteGenerator(new PaymentFilter())::generate);
+        queryField = new AutocompleteTextArea(new FilterAutocompleteGenerator(new PaymentFilter())::generate);
 
         final BooleanBinding disableInputs = Bindings.createBooleanBinding(() -> selectedRuleProperty.getValue() == null, selectedRuleProperty);
         selectedRuleProperty.addListener((_, oldValue, newValue) -> {

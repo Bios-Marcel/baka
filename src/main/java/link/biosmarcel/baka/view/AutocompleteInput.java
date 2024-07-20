@@ -108,9 +108,6 @@ public abstract class AutocompleteInput {
         if (selectedItem != null) {
             final var textBeforeCaret = input.getText().substring(0, input.getCaretPosition());
 
-            // FIXME Properly preserve newlines?
-            // FIXME Autocomplete over selection?
-
             int autocompleteTo = -1;
             for (final char c : autocompleteAfterChars) {
                 autocompleteTo = Integer.max(textBeforeCaret.lastIndexOf(c), autocompleteTo);
