@@ -100,7 +100,7 @@ public class Filter<FilterTarget> implements Predicate<FilterTarget> {
                 final String textLowered = text.toLowerCase();
                 return operators
                         .stream()
-                        .filter(operator -> operator.text.startsWith(textLowered))
+                        .filter(operator -> operator.text.toLowerCase().startsWith(textLowered))
                         .map(op -> op.text)
                         .sorted()
                         .toList();
@@ -109,13 +109,15 @@ public class Filter<FilterTarget> implements Predicate<FilterTarget> {
             @Override
             public void enterComparatorExpression(final FilterParser.ComparatorExpressionContext ctx) {
                 final var targetContext = contextToExpression.get(ctx.parent);
-                final var operatorToExtractor = fieldToOperatorToExtractor.get(ctx.field().getText());
+                final var field = ctx.field().getText();
+                final var lowercaseField = field.toLowerCase();
+                final var operatorToExtractor = fieldToOperatorToExtractor.get(lowercaseField);
                 if (operatorToExtractor == null) {
                     throw new IncompleteQueryException(false,
                             ctx.field().getText(),
                             fieldToOperatorToExtractor.keySet()
                                     .stream()
-                                    .filter(key -> key.startsWith(ctx.field().getText()))
+                                    .filter(key -> key.startsWith(lowercaseField))
                                     .toList());
                 }
 

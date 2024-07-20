@@ -4,7 +4,7 @@ options {
     caseInsensitive = true;
 }
 
-HAS:                       ('contains'|'has');
+HAS:                       'has';
 AND:                       'and';
 OR:                        'or';
 OPEN_PAR:                  '(';

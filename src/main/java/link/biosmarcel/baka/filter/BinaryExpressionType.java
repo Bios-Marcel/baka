@@ -1,8 +1,8 @@
 package link.biosmarcel.baka.filter;
 
 public enum BinaryExpressionType {
-    AND("AND"),
-    OR("OR"),
+    AND("and"),
+    OR("or"),
     ;
 
     public final String text;
