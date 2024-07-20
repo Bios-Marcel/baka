@@ -38,7 +38,8 @@ public abstract class AutocompleteInput {
         pane.maxWidthProperty().bind(input.widthProperty());
 
         completionList.setFixedCellSize(35.0);
-        completionList.setMaxHeight(8 * completionList.getFixedCellSize());
+        completionList.setMinHeight(completionList.getFixedCellSize() + 2);
+        completionList.setMaxHeight(8 * completionList.getFixedCellSize() + 2);
         completionList.setBackground(Background.fill(Color.WHITE));
         completionList.setFocusTraversable(false);
         completionList.setVisible(false);
@@ -163,9 +164,14 @@ public abstract class AutocompleteInput {
     }
 
     private void refreshPopup() {
-        updatePopupItems(autocompleteGenerator.apply(input.getText().substring(0, input.getCaretPosition())));
-        if (completionList.getItems().isEmpty()) {
+        final var newItems = autocompleteGenerator.apply(input.getText().substring(0, input.getCaretPosition()));
+        if (newItems.isEmpty()) {
             hidePopup();
+        }
+
+        // Update after hiding, to prevent unnecessary flickering and redraws.
+        updatePopupItems(newItems);
+        if (newItems.isEmpty()) {
             return;
         }
 
@@ -175,9 +181,22 @@ public abstract class AutocompleteInput {
         }
 
         completionList.setPrefHeight(completionList.getItems().size() * completionList.getFixedCellSize() + 2);
+
         final var location = computePopupLocation();
         completionList.setTranslateX(location.getX());
         completionList.setTranslateY(location.getY());
+
+        var bounds = completionList.localToScene(completionList.getBoundsInLocal());
+        final var xOutOfBounds = bounds.getMaxX() - completionList.getScene().getWidth();
+        if (xOutOfBounds > 0) {
+            completionList.setTranslateX(completionList.getTranslateX() - xOutOfBounds);
+        }
+
+        // We are currently not treating y out of bounds since it is a bit more complicated, as the height needs to
+        // be dynamic. The width is currently static ... which is yet another issue.
+
+        // Since we are using a hacky way of rendering the popup, we need to make sure it doesn't render
+        // behind other components, as it is part of the Pane, but outside the pane bounds.
         toFront(completionList);
 
         completionList.setVisible(true);
