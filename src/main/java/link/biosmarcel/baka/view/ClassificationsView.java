@@ -10,12 +10,10 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import link.biosmarcel.baka.ApplicationState;
 import link.biosmarcel.baka.data.ClassificationRule;
-import link.biosmarcel.baka.filter.IncompleteQueryException;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 public class ClassificationsView extends BakaTab {
@@ -48,23 +46,7 @@ public class ClassificationsView extends BakaTab {
         selectedRuleProperty = listView.getSelectionModel().selectedItemProperty();
         nameField = new TextField();
         tagField = new TextField();
-        final var autocompleteFilter = new PaymentFilter();
-        queryField = new AutocompleteTextArea((value) -> {
-            try {
-                autocompleteFilter.setQuery(value);
-                return Collections.EMPTY_LIST;
-            } catch (final IncompleteQueryException exception) {
-                if (value.endsWith(exception.token) &&
-                        (!exception.token.isEmpty() || value.isEmpty() || !value.stripTrailing().equalsIgnoreCase(value))
-                ) {
-                    return exception.options;
-                }
-                return Collections.EMPTY_LIST;
-            } catch (final RuntimeException exception) {
-                System.out.println(exception.getMessage());
-                return Collections.EMPTY_LIST;
-            }
-        });
+        queryField = new AutocompleteTextArea(new AutocompleteGenerator(new PaymentFilter())::generate);
 
         final BooleanBinding disableInputs = Bindings.createBooleanBinding(() -> selectedRuleProperty.getValue() == null, selectedRuleProperty);
         selectedRuleProperty.addListener((_, oldValue, newValue) -> {

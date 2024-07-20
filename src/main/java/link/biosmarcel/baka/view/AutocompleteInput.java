@@ -99,6 +99,8 @@ public abstract class AutocompleteInput {
         return input.isFocused() && !input.isDisabled();
     }
 
+    private static final char[] autocompleteAfterChars = new char[]{')', '(', ' ', '\n'};
+
     private void complete() {
         final String selectedItem = completionList.getSelectionModel().getSelectedItem();
         // selection is always nullable
@@ -108,14 +110,20 @@ public abstract class AutocompleteInput {
 
             // FIXME Properly preserve newlines?
             // FIXME Autocomplete over selection?
-            var lastSpace = textBeforeCaret.lastIndexOf(' ');
-            if (lastSpace == 1) {
-                lastSpace = textBeforeCaret.lastIndexOf('\n');
-            }
-            final var preCompletionText = textBeforeCaret.substring(0, lastSpace + 1);
 
-            // FIXME Use insert?
-            input.setText(preCompletionText + selectedItem + " " + input.getText().substring(input.getCaretPosition()));
+            int autocompleteTo = -1;
+            for (final char c : autocompleteAfterChars) {
+                autocompleteTo = Integer.max(textBeforeCaret.lastIndexOf(c), autocompleteTo);
+            }
+            final var preCompletionText = textBeforeCaret.substring(0, autocompleteTo + 1);
+
+            // Make sure that we have a space after either open or closed parenthesis.
+            String textToInsert = selectedItem + " ";
+            if (autocompleteTo != -1 && !Character.isWhitespace(textBeforeCaret.charAt(autocompleteTo))) {
+                textToInsert = " " + textToInsert;
+            }
+
+            input.setText(preCompletionText + textToInsert + input.getText().substring(input.getCaretPosition()));
             // We add a space at the end, so we can start writing / completing the next token type right away.
             input.positionCaret(preCompletionText.length() + selectedItem.length() + 1);
         }

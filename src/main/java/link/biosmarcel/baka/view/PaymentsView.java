@@ -22,7 +22,6 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.function.BiFunction;
 
@@ -81,18 +80,7 @@ public class PaymentsView extends BakaTab {
 
         details = new PaymentDetails(state);
 
-        // FIXME Can we make parts reusable?
-        final var autocompleteFilter = new PaymentFilter();
-        final var filterField = new AutocompleteField((value) -> {
-            try {
-                autocompleteFilter.setQuery(value);
-                return Collections.EMPTY_LIST;
-            } catch (final IncompleteQueryException exception) {
-                return exception.options;
-            } catch (final RuntimeException exception) {
-                return Collections.EMPTY_LIST;
-            }
-        });
+        final var filterField = new AutocompleteField(new AutocompleteGenerator(new PaymentFilter())::generate);
         final var filter = new PaymentFilter();
         filterField.textProperty().addListener((_, _, newText) -> {
             try {
