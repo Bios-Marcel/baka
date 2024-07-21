@@ -23,8 +23,7 @@ import org.jspecify.annotations.Nullable;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.Month;
-import java.time.format.TextStyle;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAdjusters;
 import java.util.*;
 
@@ -149,7 +148,10 @@ public class EvaluationView extends BakaTab {
     private void updateCharts() {
         final String unclassified = "unclassified";
         final String ignore = "ignore";
-        final Map<String, @Nullable Map<Month, BigDecimal>> classificationToMonthToMoney = new HashMap<>();
+        // The category axis expects a string. There's no way to easily change the data time and change how it is
+        // rendered. As far as I can see, we'd have to write a completely custom axis. So instead we map from
+        // category to yyyy-MMM to amount.
+        final Map<String, @Nullable Map<String, BigDecimal>> classificationToMonthToMoney = new HashMap<>();
 
         // FIXME Add initial balance.
         BigDecimal balance = new BigDecimal("0");
@@ -164,6 +166,8 @@ public class EvaluationView extends BakaTab {
         final var sorted = sortedStream
                 .sorted(Comparator.comparing(a -> a.effectiveDate))
                 .toList();
+
+        final var dateFormatter = DateTimeFormatter.ofPattern("yyyy MMM");
 
         for (final var payment : sorted) {
             if (payment.effectiveDate.isBefore(startDate.get().atStartOfDay())) {
@@ -199,6 +203,7 @@ public class EvaluationView extends BakaTab {
             }
 
             var leftOver = payment.amount;
+            final String yyyyMM = payment.effectiveDate.format(dateFormatter);
             for (final var classification : payment.classifications) {
                 // Add to the negative amount
                 var amount = classification.amount.abs();
@@ -208,24 +213,24 @@ public class EvaluationView extends BakaTab {
                 }
 
                 var entry = classificationToMonthToMoney.computeIfAbsent(classification.tag, _ -> new TreeMap<>());
-                var value = entry.get(month);
+                var value = entry.get(yyyyMM);
                 if (value != null) {
                     value = value.subtract(amount);
                 } else {
                     value = amount.negate();
                 }
-                entry.put(month, value);
+                entry.put(yyyyMM, value);
             }
 
             if (leftOver.compareTo(BigDecimal.ZERO) != 0) {
                 final var entry = Objects.requireNonNull(classificationToMonthToMoney.computeIfAbsent(unclassified, _ -> new TreeMap<>()));
-                var value = entry.get(month);
+                var value = entry.get(yyyyMM);
                 if (value != null) {
                     value = leftOver.add(value);
                 } else {
                     value = leftOver;
                 }
-                entry.put(month, value);
+                entry.put(yyyyMM, value);
             }
         }
 
@@ -248,16 +253,20 @@ public class EvaluationView extends BakaTab {
 
             // Hack to ensure that the order is correct in case there are any month values missing for a month, in which
             // case we can get incorrectly sorted months.
-            for (var month = startDate.get().getMonth(); month.getValue() <= endDate.get().getMonth().getValue(); month = month.plus(1)) {
+            for (
+                    var month = startDate.get();
+                    month.getMonthValue() <= endDate.get().getMonth().getValue() && month.getYear() <= endDate.get().getYear();
+                    month = month.plusMonths(1)
+            ) {
                 categorySeries.getData().add(new XYChart.Data<>(
-                        renderMonth(month),
+                        month.format(dateFormatter),
                         0
                 ));
             }
 
             for (final var monthToAmount : Objects.requireNonNull(category.getValue()).entrySet()) {
                 categorySeries.getData().add(new XYChart.Data<>(
-                        renderMonth(monthToAmount.getKey()),
+                        monthToAmount.getKey(),
                         // We render positive values for now on, as the chart renders a 1 pixel gap between the series otherwise.
                         monthToAmount.getValue().abs()
                 ));
@@ -277,10 +286,6 @@ public class EvaluationView extends BakaTab {
                 Tooltip.install(dataPoint.getNode(), tooltip);
             }
         }
-    }
-
-    private static String renderMonth(final Month month) {
-        return month.getDisplayName(TextStyle.FULL, Locale.getDefault());
     }
 
     @Override
