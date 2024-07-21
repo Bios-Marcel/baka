@@ -4,6 +4,7 @@ import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.value.ChangeListener;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
@@ -37,6 +38,9 @@ public class EvaluationView extends BakaTab {
 
     private final ObservableList<Account> accounts;
     private final ComboBox<Account> accountFilter;
+    private final ChangeListener<LocalDate> dateChangeListener;
+    private final ChangeListener<Account> accountChangeListener;
+
 
     /**
      * This account will be abused to specify we want to show data across all accounts. This is due to the fact that null misbehaves.
@@ -109,9 +113,8 @@ public class EvaluationView extends BakaTab {
         );
         topBar.setSpacing(2.5);
 
-        startDate.addListener((_, _, _) -> updateCharts());
-        endDate.addListener((_, _, _) -> updateCharts());
-        accountFilter.getSelectionModel().selectedItemProperty().addListener((_, _, _) -> updateCharts());
+        dateChangeListener = (_, _, _) -> updateCharts();
+        accountChangeListener = (_, _, _) -> updateCharts();
 
         final VBox layout = new VBox(
                 topBar,
@@ -298,9 +301,16 @@ public class EvaluationView extends BakaTab {
         }
 
         updateCharts();
+
+        startDate.addListener(dateChangeListener);
+        endDate.addListener(dateChangeListener);
+        accountFilter.getSelectionModel().selectedItemProperty().addListener(accountChangeListener);
     }
 
     @Override
     protected void onTabDeactivated() {
+        startDate.removeListener(dateChangeListener);
+        endDate.removeListener(dateChangeListener);
+        accountFilter.getSelectionModel().selectedItemProperty().removeListener(accountChangeListener);
     }
 }
