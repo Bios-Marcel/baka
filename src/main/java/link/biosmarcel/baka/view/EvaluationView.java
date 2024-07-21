@@ -17,6 +17,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.util.Duration;
+import javafx.util.StringConverter;
 import link.biosmarcel.baka.ApplicationState;
 import link.biosmarcel.baka.data.Account;
 import org.jspecify.annotations.Nullable;
@@ -39,6 +40,7 @@ public class EvaluationView extends BakaTab {
     private final ComboBox<Account> accountFilter;
     private final ChangeListener<LocalDate> dateChangeListener;
     private final ChangeListener<Account> accountChangeListener;
+    private final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy MMM");
 
 
     /**
@@ -68,8 +70,25 @@ public class EvaluationView extends BakaTab {
         );
         spendingsChart.setAnimated(false);
 
+        // Since we are using a number axis, but want our major ticks to be year+month, we have to normalise the dates
+        // into an Double value. Days are added after the comma, as the tick unit is 1.0 in order to only display the
+        // months as major ticks and no minor ticks. This way we can render months across years without losing a lot
+        // of precision.
         final var balanceChartDayAxis = new NumberAxis();
-        balanceChartDayAxis.setTickUnit(0.2);
+        balanceChartDayAxis.setTickLabelFormatter(new StringConverter<>() {
+            @Override
+            public String toString(final Number object) {
+                final var doubleValue = object.doubleValue();
+                return LocalDate.of((int) (startDate.get().getYear() + doubleValue / 12), (int) (doubleValue % 12 + 1), 1).format(dateFormatter);
+            }
+
+            @Override
+            public Number fromString(final String string) {
+                return 0;
+            }
+        });
+        balanceChartDayAxis.setTickUnit(1.0);
+        balanceChartDayAxis.setMinorTickVisible(false);
         balanceChartDayAxis.setAutoRanging(false);
         balanceChartDayAxis.lowerBoundProperty().bind(balanceLowerBound);
         balanceChartDayAxis.upperBoundProperty().bind(balanceUpperBound);
@@ -153,10 +172,9 @@ public class EvaluationView extends BakaTab {
         // category to yyyy-MMM to amount.
         final Map<String, @Nullable Map<String, BigDecimal>> classificationToMonthToMoney = new HashMap<>();
 
-        // FIXME Add initial balance.
         BigDecimal balance = new BigDecimal("0");
         final XYChart.Series<Number, Number> balanceSeries = new XYChart.Series<>();
-        balanceData.setAll(balanceSeries);
+        balanceData.clear();
 
         var sortedStream = state.data.payments.stream();
         final var account = accountFilter.getSelectionModel().selectedItemProperty().get();
@@ -167,30 +185,29 @@ public class EvaluationView extends BakaTab {
                 .sorted(Comparator.comparing(a -> a.effectiveDate))
                 .toList();
 
-        final var dateFormatter = DateTimeFormatter.ofPattern("yyyy MMM");
+        final var baseYear = startDate.get().getYear();
 
+        final var startDateWithTime = startDate.get().atStartOfDay();
+        final var endDateWithTime = endDate.get().atStartOfDay();
         for (final var payment : sorted) {
-            if (payment.effectiveDate.isBefore(startDate.get().atStartOfDay())) {
+            if (payment.effectiveDate.isBefore(startDateWithTime)) {
+                // If we only show a partial balance, we have to take into account old data, as we'll otherwise have
+                // an incorrect starting point. Let's say you made 10k from 2025 to 2027, but then show data from 2026
+                // to 2027. You want to start at 5k, instead of 0k.
+                balance = balance.add(payment.amount);
                 continue;
             }
-            if (payment.effectiveDate.isAfter(endDate.get().atStartOfDay())) {
+            if (payment.effectiveDate.isAfter(endDateWithTime)) {
                 continue;
             }
 
-            final var month = payment.effectiveDate.getMonth();
             balance = balance.add(payment.amount);
-            final var chartX =
-                    // Z.B. March (3) +
-                    month.getValue()
-                            // 10
-                            + (double) (payment.effectiveDate.getDayOfMonth())
-                            // 30
-                            / (double) (payment.effectiveDate.with(TemporalAdjusters.lastDayOfMonth()).getDayOfMonth())
-                    // = 3.33
-                    ;
-
-            // We only want the latest datapoint for each point in time, to prevent having a day with 20 datapoints.
-            // This also gets rid of unnecessary fluctations.
+            final double chartX =
+                    (payment.effectiveDate.getYear() - baseYear) * 12
+                            + (payment.effectiveDate.getMonthValue() - 1)
+                            + (1.0 / payment.effectiveDate.getMonth().length(payment.effectiveDate.toLocalDate().isLeapYear()) * payment.effectiveDate.getDayOfMonth());
+            // We only want the latest datapoint for each point in time, to prevent having a day with 20 data points.
+            // This also gets rid of unnecessary fluctuations.
             if (!balanceSeries.getData().isEmpty() && balanceSeries.getData().getLast().getXValue().equals(chartX)) {
                 balanceSeries.getData().set(balanceSeries.getData().size() - 1, new XYChart.Data<>(chartX, balance));
             } else {
@@ -234,6 +251,13 @@ public class EvaluationView extends BakaTab {
             }
         }
 
+        if (!balanceSeries.getData().isEmpty()) {
+            balanceLowerBound.setValue(Math.floor(balanceSeries.getData().getFirst().getXValue().doubleValue()));
+            balanceUpperBound.setValue(Math.ceil(balanceSeries.getData().getLast().getXValue().doubleValue()));
+        }
+        balanceData.setAll(balanceSeries);
+
+        // It's import for this to happen after the data is added, as we won't have any tooltips otherwise.
         for (final var dataPoint : balanceSeries.getData()) {
             Tooltip tooltip = new Tooltip();
             tooltip.setShowDelay(Duration.ZERO);
@@ -241,12 +265,9 @@ public class EvaluationView extends BakaTab {
             Tooltip.install(dataPoint.getNode(), tooltip);
         }
 
-        if (!balanceSeries.getData().isEmpty()) {
-            balanceLowerBound.setValue(Math.floor(balanceSeries.getData().getFirst().getXValue().doubleValue()));
-            balanceUpperBound.setValue(Math.ceil(balanceSeries.getData().getLast().getXValue().doubleValue()));
-        }
-
         final List<XYChart.Series<String, Number>> fragments = new ArrayList<>();
+        final var endYear = endDate.get().getYear();
+        final var endMonth = endDate.get().getMonth().getValue();
         for (final var category : classificationToMonthToMoney.entrySet()) {
             final XYChart.Series<String, Number> categorySeries = new XYChart.Series<>();
             categorySeries.setName(category.getKey());
@@ -255,7 +276,7 @@ public class EvaluationView extends BakaTab {
             // case we can get incorrectly sorted months.
             for (
                     var month = startDate.get();
-                    month.getMonthValue() <= endDate.get().getMonth().getValue() && month.getYear() <= endDate.get().getYear();
+                    month.getMonthValue() <= endMonth && month.getYear() <= endYear;
                     month = month.plusMonths(1)
             ) {
                 categorySeries.getData().add(new XYChart.Data<>(
