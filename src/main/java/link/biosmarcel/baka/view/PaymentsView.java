@@ -1,5 +1,9 @@
 package link.biosmarcel.baka.view;
 
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
@@ -15,6 +19,8 @@ import link.biosmarcel.baka.ApplicationState;
 import link.biosmarcel.baka.data.Account;
 import link.biosmarcel.baka.data.Classification;
 import link.biosmarcel.baka.data.Payment;
+import link.biosmarcel.baka.filter.FilterAutocompleteGenerator;
+import link.biosmarcel.baka.filter.IncompleteQueryException;
 
 import java.io.File;
 import java.math.BigDecimal;
@@ -79,18 +85,39 @@ public class PaymentsView extends BakaTab {
 
         details = new PaymentDetails(state);
 
-        final TextField filterField = new TextField();
+        final var filterField = new AutocompleteField(
+                new char[]{')', '(', ' ', '\n'},
+                new FilterAutocompleteGenerator(new PaymentFilter())::generate
+        );
         final var filter = new PaymentFilter();
-        filterField.setPrefColumnCount(30);
+
+        StringProperty filterError = new SimpleStringProperty();
+        BooleanProperty fatalError = new SimpleBooleanProperty();
+        AutocompleteHelper.installErrorToolTip(filterField, filterError, fatalError);
+
         filterField.textProperty().addListener((_, _, newText) -> {
-            if (filter.setQuery(newText)) {
+            try {
+                filterError.set("");
+                fatalError.set(false);
+                filter.setQuery(newText);
                 filteredData.setPredicate(paymentFX -> filter.test(paymentFX.payment));
+            } catch (final IncompleteQueryException exception) {
+                if (exception.empty) {
+                    filteredData.setPredicate(null);
+                } else {
+                    filterError.set("Query is incomplete.");
+                    fatalError.set(false);
+                }
+                // If the query is not empty, but incomplete, it isn't really an issue.
+            } catch (final RuntimeException exception) {
+                filterError.set(exception.getMessage());
+                fatalError.set(true);
             }
         });
 
         final var topBarCenterSpacer = new Region();
         final var layout = new VBox(
-                new HBox(2.5, importButton, classifyButton, topBarCenterSpacer, filterField),
+                new HBox(2.5, importButton, classifyButton, topBarCenterSpacer, filterField.getNode()),
                 table,
                 details
         );

@@ -12,3 +12,7 @@
     -fx-background-radius: 4px;
     -fx-padding: 4px;
 }
+
+.text-field-error {
+    -fx-control-inner-background: rgb(255,160,160);
+}

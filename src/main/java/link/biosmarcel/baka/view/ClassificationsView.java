@@ -3,13 +3,15 @@ package link.biosmarcel.baka.view;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.BooleanBinding;
-import javafx.beans.property.ReadOnlyObjectProperty;
+import javafx.beans.property.*;
 import javafx.geometry.Insets;
 import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import link.biosmarcel.baka.ApplicationState;
 import link.biosmarcel.baka.data.ClassificationRule;
+import link.biosmarcel.baka.filter.FilterAutocompleteGenerator;
+import link.biosmarcel.baka.filter.IncompleteQueryException;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -20,7 +22,7 @@ public class ClassificationsView extends BakaTab {
     private final ListView<ClassificationRuleFX> listView;
     private final TextField nameField;
     private final TextField tagField;
-    private final TextArea queryField;
+    private final AutocompleteTextArea queryField;
     private final ReadOnlyObjectProperty<@Nullable ClassificationRuleFX> selectedRuleProperty;
 
 
@@ -46,7 +48,33 @@ public class ClassificationsView extends BakaTab {
         selectedRuleProperty = listView.getSelectionModel().selectedItemProperty();
         nameField = new TextField();
         tagField = new TextField();
-        queryField = new TextArea();
+
+        final PaymentFilter filter = new PaymentFilter();
+        queryField = new AutocompleteTextArea(
+                new char[]{')', '(', ' ', '\n'},
+                new FilterAutocompleteGenerator(filter)::generate
+        );
+
+        StringProperty filterError = new SimpleStringProperty();
+        BooleanProperty fatalError = new SimpleBooleanProperty();
+        AutocompleteHelper.installErrorToolTip(queryField, filterError, fatalError);
+
+        queryField.textProperty().addListener((_, _, newText) -> {
+            try {
+                filterError.set("");
+                fatalError.set(false);
+                filter.setQuery(newText);
+            } catch (final IncompleteQueryException exception) {
+                if (!exception.empty) {
+                    filterError.set("Query is incomplete.");
+                    fatalError.set(false);
+                }
+                // If the query is not empty, but incomplete, it isn't really an issue.
+            } catch (final RuntimeException exception) {
+                filterError.set(exception.getMessage());
+                fatalError.set(true);
+            }
+        });
 
         final BooleanBinding disableInputs = Bindings.createBooleanBinding(() -> selectedRuleProperty.getValue() == null, selectedRuleProperty);
         selectedRuleProperty.addListener((_, oldValue, newValue) -> {
@@ -59,7 +87,7 @@ public class ClassificationsView extends BakaTab {
 
                 nameField.setText("");
                 tagField.setText("");
-                queryField.setText("");
+                queryField.textProperty().set("");
             }
 
             if (newValue != null) {
@@ -78,7 +106,7 @@ public class ClassificationsView extends BakaTab {
         details.add(new Label("Tag"), 0, 1);
         details.add(tagField, 1, 1);
         details.add(new Label("Query"), 0, 2);
-        details.add(queryField, 1, 2);
+        details.add(queryField.getNode(), 1, 2);
 
         final var newButton = new Button("New");
         newButton.setOnAction(_ -> {

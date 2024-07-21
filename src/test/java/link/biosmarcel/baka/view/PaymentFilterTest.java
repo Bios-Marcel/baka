@@ -2,6 +2,7 @@ package link.biosmarcel.baka.view;
 
 import link.biosmarcel.baka.data.Account;
 import link.biosmarcel.baka.data.Payment;
+import link.biosmarcel.baka.filter.IncompleteQueryException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -9,6 +10,12 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 class PaymentFilterTest {
+    @Test
+    public void test_emptyGroup() {
+        final var filter = new PaymentFilter();
+        Assertions.assertThrows(IncompleteQueryException.class, () -> filter.setQuery("()"));
+    }
+
     @Test
     public void test_BinaryExpression_LowerCase() {
         final var now = LocalDateTime.now();

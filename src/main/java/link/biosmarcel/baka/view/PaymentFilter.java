@@ -4,6 +4,7 @@ import link.biosmarcel.baka.data.Payment;
 import link.biosmarcel.baka.filter.Filter;
 import link.biosmarcel.baka.filter.Operator;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
@@ -14,6 +15,17 @@ public class PaymentFilter extends Filter<Payment> {
     private static final DateTimeFormatter DATE_FORMAT = new DateTimeFormatterBuilder().appendPattern("d.M.[uuuu][uu]").toFormatter();
 
     {
+        // FIXME Optimised containsLowerCased
+
+        register("account", Operator.EQ, (payment, value) -> payment.account.name != null && payment.account.name.equalsIgnoreCase(value), String::toLowerCase);
+        register("account", Operator.NOT_EQ, (payment, value) -> payment.account.name == null || !payment.account.name.equalsIgnoreCase(value), String::toLowerCase);
+        register("account", Operator.HAS, (payment, value) -> payment.account.name != null && !payment.account.name.toLowerCase().contains(value), String::toLowerCase);
+
+        register("amount", Operator.LT, (payment, value) -> payment.amount.compareTo(value) < 0, BigDecimal::new);
+        register("amount", Operator.GT, (payment, value) -> payment.amount.compareTo(value) > 0, BigDecimal::new);
+        register("amount", Operator.LT_EQ, (payment, value) -> payment.amount.compareTo(value) <= 0, BigDecimal::new);
+        register("amount", Operator.GT_EQ, (payment, value) -> payment.amount.compareTo(value) >= 0, BigDecimal::new);
+
         register("name", Operator.EQ, (payment, value) -> payment.name.equalsIgnoreCase(value), String::toLowerCase);
         register("name", Operator.NOT_EQ, (payment, value) -> !payment.name.equalsIgnoreCase(value), String::toLowerCase);
         register("name", Operator.HAS, (payment, value) -> payment.name.toLowerCase().contains(value), String::toLowerCase);

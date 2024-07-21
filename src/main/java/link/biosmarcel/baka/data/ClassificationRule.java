@@ -3,6 +3,8 @@ package link.biosmarcel.baka.data;
 import link.biosmarcel.baka.view.PaymentFilter;
 import org.jspecify.annotations.Nullable;
 
+import java.util.function.Predicate;
+
 public class ClassificationRule {
     public String name = "";
     public String tag = "";
@@ -13,13 +15,17 @@ public class ClassificationRule {
         this.query = query;
     }
 
-    private transient @Nullable PaymentFilter compiled = null;
+    private transient @Nullable Predicate<Payment> compiled = null;
 
     public boolean test(final Payment payment) {
         if (compiled == null) {
-            compiled = new PaymentFilter();
-            if (!compiled.setQuery(query)) {
-                return false;
+            final var compiled = new PaymentFilter();
+            try {
+                compiled.setQuery(query);
+                this.compiled = compiled;
+            } catch (final RuntimeException exception) {
+                // FIXME This should give user feedback
+                this.compiled = _ -> false;
             }
         }
 
