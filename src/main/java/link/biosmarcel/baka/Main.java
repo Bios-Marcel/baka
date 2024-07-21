@@ -5,6 +5,9 @@ import javafx.application.Platform;
 import javafx.scene.Scene;
 import javafx.scene.control.TabPane;
 import javafx.scene.image.Image;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyCodeCombination;
+import javafx.scene.input.KeyCombination;
 import javafx.stage.Stage;
 import link.biosmarcel.baka.data.Data;
 import link.biosmarcel.baka.view.*;
@@ -42,12 +45,9 @@ public class Main extends Application {
                 .setRoot(data)
                 .start();
 
-        ApplicationState state = new ApplicationState(storageManager, storageManager.createEagerStorer(), data);
-
-//        data.payments.clear();
-//        storageManager.store(data);
-
-        TabPane tabs = new TabPane(
+        final ApplicationState state = new ApplicationState(storageManager, storageManager.createEagerStorer(), data);
+        final DebugView debugView = new DebugView(state);
+        final TabPane tabs = new TabPane(
                 new PaymentsView(state),
                 new AccountsView(state),
                 new EvaluationView(state),
@@ -55,11 +55,25 @@ public class Main extends Application {
         );
         tabs.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
 
-        Scene scene = new Scene(tabs, 800, 600);
+        state.debugMode.addListener((_, _, newValue) -> {
+            if (newValue) {
+                if (!tabs.getTabs().contains(debugView)) {
+                    tabs.getTabs().add(debugView);
+                }
+            } else {
+                tabs.getTabs().remove(debugView);
+            }
+        });
+
+        final Scene scene = new Scene(tabs, 800, 600);
         scene.getStylesheets().add(Objects.requireNonNull(Main.class.getResource("base.css")).toExternalForm());
         stage.setTitle("Baka");
         stage.getIcons().add(new Image(Objects.requireNonNull(getClass().getResourceAsStream("icon.png"))));
         stage.setScene(scene);
+
+        scene.getAccelerators().put(new KeyCodeCombination(KeyCode.D, KeyCombination.CONTROL_DOWN, KeyCombination.SHIFT_DOWN), () -> {
+            state.debugMode.set(!state.debugMode.getValue());
+        });
 
         // FIXME This seems dumb?
         Platform.setImplicitExit(true);

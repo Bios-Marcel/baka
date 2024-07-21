@@ -83,6 +83,20 @@ public class PaymentsView extends BakaTab {
         final var classifyButton = new Button("Apply Classification Rules");
         classifyButton.setOnAction(_ -> classifyAllUnclassified());
 
+        // Debug Feature for now, as I am not sure whether I want to easily allow this and this isn't optimised and
+        // has a bad user experience.
+        final var deleteSelected = new Button("Delete Visible");
+        deleteSelected.visibleProperty().bind(state.debugMode);
+        deleteSelected.managedProperty().bind(state.debugMode);
+        deleteSelected.setOnAction(__ -> {
+            filteredData.forEach(payment -> state.data.payments.remove(payment.payment));
+            state.storer.store(state.data);
+            state.storer.commit();
+
+            data.setAll(convertPayments(state.data.payments));
+            table.sort();
+        });
+
         details = new PaymentDetails(state);
 
         final var filterField = new AutocompleteField(
@@ -117,7 +131,7 @@ public class PaymentsView extends BakaTab {
 
         final var topBarCenterSpacer = new Region();
         final var layout = new VBox(
-                new HBox(2.5, importButton, classifyButton, topBarCenterSpacer, filterField.getNode()),
+                new HBox(2.5, importButton, classifyButton, deleteSelected, topBarCenterSpacer, filterField.getNode()),
                 table,
                 details
         );
