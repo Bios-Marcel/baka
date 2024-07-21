@@ -164,6 +164,7 @@ public abstract class AutocompleteInput {
     }
 
     private void hidePopup() {
+        toBack();
         completionList.setVisible(false);
     }
 
@@ -201,7 +202,7 @@ public abstract class AutocompleteInput {
 
         // Since we are using a hacky way of rendering the popup, we need to make sure it doesn't render
         // behind other components, as it is part of the Pane, but outside the pane bounds.
-        toFront(completionList);
+        toFront();
 
         completionList.setVisible(true);
     }
@@ -228,10 +229,18 @@ public abstract class AutocompleteInput {
         input.getStyleClass().add("text-field-error");
     }
 
-    private void toFront(Node node) {
-        node.setViewOrder(-1);
+    private void toFront() {
+        recursivelySetViewOrder(completionList, -1);
+    }
+
+    private void toBack() {
+        recursivelySetViewOrder(completionList, 0);
+    }
+
+    private void recursivelySetViewOrder(final Node node, final double viewOrder) {
+        node.setViewOrder(viewOrder);
         if (node.getParent() != null) {
-            toFront(node.getParent());
+            recursivelySetViewOrder(node.getParent(), viewOrder);
         }
     }
 
