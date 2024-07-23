@@ -15,6 +15,9 @@ import org.jspecify.annotations.Nullable;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 /**
  * Data Model for the {@link PaymentsView}-Tab.
@@ -31,11 +34,11 @@ public class PaymentFX {
     public final ObjectProperty<LocalDate> bookingDate = new SimpleObjectProperty<>();
     public final ObjectProperty<@Nullable LocalDate> effectiveDate = new SimpleObjectProperty<>();
 
-    public final ObservableList<Classification> classifications = FXCollections.observableArrayList();
+    public final ObservableList<ClassificationFX> classifications = FXCollections.observableArrayList();
     public final StringBinding classificationRenderValue = Bindings.createStringBinding(() -> {
         return classifications
                 .stream()
-                .map(classification -> classification.tag)
+                .map(classification -> classification.tag.get())
                 .reduce((string, string2) -> string + "; " + string2)
                 .orElse("");
     }, classifications);
@@ -51,6 +54,14 @@ public class PaymentFX {
         if (payment.effectiveDate != null) {
             effectiveDate.set(payment.effectiveDate.toLocalDate());
         }
-        classifications.addAll(payment.classifications);
+        classifications.addAll(convertClassifications(payment.classifications));
+    }
+
+    private static List<ClassificationFX> convertClassifications(Collection<Classification> classifications) {
+        final var converted = new ArrayList<ClassificationFX>(classifications.size());
+        for (final var classification : classifications) {
+            converted.add(new ClassificationFX(classification));
+        }
+        return converted;
     }
 }

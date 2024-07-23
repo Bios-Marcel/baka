@@ -14,14 +14,12 @@ import link.biosmarcel.baka.filter.FilterAutocompleteGenerator;
 import link.biosmarcel.baka.filter.IncompleteQueryException;
 import org.jspecify.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 public class ClassificationsView extends BakaTab {
     private final ListView<ClassificationRuleFX> listView;
     private final TextField nameField;
-    private final TextField tagField;
+    private final AutocompleteField tagField;
     private final AutocompleteTextArea queryField;
     private final ReadOnlyObjectProperty<@Nullable ClassificationRuleFX> selectedRuleProperty;
 
@@ -47,7 +45,13 @@ public class ClassificationsView extends BakaTab {
 
         selectedRuleProperty = listView.getSelectionModel().selectedItemProperty();
         nameField = new TextField();
-        tagField = new TextField();
+        tagField = new AutocompleteField(new char[0], string -> {
+            final var lowered = string.toLowerCase().stripLeading();
+            return availableTags.stream().filter(tag -> tag.startsWith(lowered) && !tag.equals(lowered)).toList();
+        });
+        tagField.setInsertSpaceAfterCompletion(false);
+        // necessary to prevent the popup from clashing with queryField.
+//        tagField.setViewOrder(-2);
 
         final PaymentFilter filter = new PaymentFilter();
         queryField = new AutocompleteTextArea(
@@ -85,8 +89,8 @@ public class ClassificationsView extends BakaTab {
                 oldValue.tag.unbindBidirectional(tagField.textProperty());
                 oldValue.query.unbindBidirectional(queryField.textProperty());
 
-                nameField.setText("");
-                tagField.setText("");
+                nameField.textProperty().set("");
+                tagField.textProperty().set("");
                 queryField.textProperty().set("");
             }
 
@@ -95,6 +99,8 @@ public class ClassificationsView extends BakaTab {
                 tagField.textProperty().bindBidirectional(newValue.tag);
                 queryField.textProperty().bindBidirectional(newValue.query);
             }
+
+            addTagsFromRules();
         });
         nameField.disableProperty().bind(disableInputs);
         tagField.disableProperty().bind(disableInputs);
@@ -104,7 +110,7 @@ public class ClassificationsView extends BakaTab {
         details.add(new Label("Name"), 0, 0);
         details.add(nameField, 1, 0);
         details.add(new Label("Tag"), 0, 1);
-        details.add(tagField, 1, 1);
+        details.add(tagField.getNode(), 1, 1);
         details.add(new Label("Query"), 0, 2);
         details.add(queryField.getNode(), 1, 2);
 
@@ -195,8 +201,29 @@ public class ClassificationsView extends BakaTab {
         return newFXElements;
     }
 
+    private final Set<String> availableTags = new HashSet<>();
+
+    private void addTagsFromRules() {
+        for (final var rule : state.data.classificationRules) {
+            if (!rule.tag.isBlank()) {
+                // We temporarily strip here, as the final stripping happens on save.
+                availableTags.add(rule.tag.strip().toLowerCase());
+            }
+        }
+    }
+
     @Override
     protected void onTabActivated() {
+        availableTags.clear();
+        for (final var payment : state.data.payments) {
+            for (final var classification : payment.classifications) {
+                if (classification.tag != null && !classification.tag.isBlank()) {
+                    availableTags.add(classification.tag.toLowerCase());
+                }
+            }
+        }
+        addTagsFromRules();
+
         listView.getItems().setAll(convertRules(state.data.classificationRules));
 
         if (!listView.getItems().isEmpty()) {
@@ -217,6 +244,12 @@ public class ClassificationsView extends BakaTab {
         final var selected = selectedRuleProperty.get();
         if (selected != null) {
             selected.apply();
+        }
+
+        // We currently directly bind the property, so any entry is accepted as is, hence we have to correct it
+        // before saving for now. This is an implementation detail however and should not cause breakage later on.
+        for (final var rule : state.data.classificationRules) {
+            rule.tag = rule.tag.strip();
         }
 
         // Just storing the classifications will cause issues if it hasn't been persisted before.

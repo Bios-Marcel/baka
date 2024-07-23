@@ -25,6 +25,7 @@ public abstract class AutocompleteInput {
     private final ListView<String> completionList;
     private final Function<String, List<String>> autocompleteGenerator;
     private final char[] tokenSeparators;
+    private boolean insertSpaceAfterCompletion = true;
 
     protected final TextInputControl input;
 
@@ -130,7 +131,10 @@ public abstract class AutocompleteInput {
         }
 
         final var completable = textBeforeCaret.substring(autocompleteTo + 1);
-        String textToInsert = selectedItem.substring(completable.length()) + " ";
+        String textToInsert = selectedItem.substring(completable.length());
+        if (insertSpaceAfterCompletion) {
+            textToInsert = textToInsert + " ";
+        }
 
         if (input.getSelection().getLength() > 0) {
             input.replaceSelection(textToInsert);
@@ -227,6 +231,10 @@ public abstract class AutocompleteInput {
         // Prevent adding class twice.
         clearError();
         input.getStyleClass().add("text-field-error");
+    }
+
+    public void setInsertSpaceAfterCompletion(final boolean insertSpaceAfterCompletion) {
+        this.insertSpaceAfterCompletion = insertSpaceAfterCompletion;
     }
 
     private void toFront() {

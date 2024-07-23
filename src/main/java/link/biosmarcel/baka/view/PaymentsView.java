@@ -236,5 +236,12 @@ public class PaymentsView extends BakaTab {
         data.clear();
         importButton.getItems().clear();
     }
+
+    @Override
+    public void save() {
+        details.save();
+        state.storer.store(state.data);
+        state.storer.commit();
+    }
 }
 
