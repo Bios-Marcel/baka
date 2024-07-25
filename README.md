@@ -22,9 +22,7 @@ In order to delete the data, simply remove `$env.APPDATA/baka`.
 An installer can be built via maven:
 
 ```shell
-./mvnw -f antlr.xml dependency:get -Dartifact="org.antlr:antlr4-runtime:4.13.1:jar"
-./mvnw -f antlr.xml generate-resources
-./mvnw compile package javafx:jlink jpackage:jpackage
+./gradlew build jpackage
 ```
 
 Updating an existing installation does not work correctly as of now.
@@ -45,18 +43,6 @@ TODO
     * OpenJDK 22
 * Optional
     * Building a windows installer: https://github.com/wixtoolset/wix3/releases
-
-### Setup
-
-In order to get all dependencies and generated sources, run:
-
-```shell
-./mvnw -f antlr.xml dependency:get -Dartifact="org.antlr:antlr4-runtime:4.13.1:jar"
-./mvnw -f antlr.xml generate-resources
-./mvnw compile
-```
-
-If you are using an IDE (such as IntelliJ), regenerate required IDE resources and reload the project.
 
 ### Debug Mode
 
