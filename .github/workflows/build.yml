@@ -25,9 +25,7 @@ jobs:
       - name: Build artifact
         shell: bash
         run: |
-          ./mvnw -f antlr.xml dependency:get -Dartifact="org.antlr:antlr4-runtime:4.13.1:jar"
-          ./mvnw -f antlr.xml generate-resources
-          ./mvnw compile package javafx:jlink jpackage:jpackage
+          ./gradlew.bat build jpackage
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
