@@ -18,6 +18,7 @@ import javafx.stage.FileChooser;
 import link.biosmarcel.baka.ApplicationState;
 import link.biosmarcel.baka.data.Account;
 import link.biosmarcel.baka.data.Classification;
+import link.biosmarcel.baka.data.ClassificationRule;
 import link.biosmarcel.baka.data.Payment;
 import link.biosmarcel.baka.filter.FilterAutocompleteGenerator;
 import link.biosmarcel.baka.filter.IncompleteQueryException;
@@ -146,20 +147,24 @@ public class PaymentsView extends BakaTab {
     }
 
     private void classifyAllUnclassified() {
+        final var compiledRules = state.data.classificationRules.stream().map(ClassificationRule::compile).toList();
         for (final var payment : state.data.payments) {
-            if (payment.classifications.isEmpty() && payment.amount.doubleValue() < 0.0) {
-                System.out.println(payment.name + " / " + payment.reference);
-                for (final var rule : state.data.classificationRules) {
-                    if (rule.test(payment)) {
-                        final var classification = new Classification();
-                        classification.tag = rule.tag;
-                        classification.amount = payment.amount;
-                        payment.classifications.add(classification);
-                        state.storer.store(payment.classifications);
-                        state.storer.store(payment);
-                        break;
-                    }
+            if (!payment.classifications.isEmpty() || payment.amount.doubleValue() >= 0.0) {
+                continue;
+            }
+
+            for (final var rule : compiledRules) {
+                if (!rule.test(payment)) {
+                    continue;
                 }
+
+                final var classification = new Classification();
+                classification.tag = rule.tag;
+                classification.amount = payment.amount;
+                payment.classifications.add(classification);
+                state.storer.store(payment.classifications);
+                state.storer.store(payment);
+                break;
             }
         }
 
