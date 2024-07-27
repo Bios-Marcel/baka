@@ -1,4 +1,4 @@
-package link.biosmarcel.baka.view;
+package link.biosmarcel.baka.view.component;
 
 import javafx.geometry.Point2D;
 import javafx.scene.control.TextArea;

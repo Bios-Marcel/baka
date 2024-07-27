@@ -9,6 +9,8 @@ import javafx.scene.control.ListView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import link.biosmarcel.baka.data.Classification;
+import link.biosmarcel.baka.view.model.ClassificationFX;
+import link.biosmarcel.baka.view.model.PaymentFX;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Objects;

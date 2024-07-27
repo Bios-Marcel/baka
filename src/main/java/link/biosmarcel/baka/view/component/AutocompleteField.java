@@ -1,4 +1,4 @@
-package link.biosmarcel.baka.view;
+package link.biosmarcel.baka.view.component;
 
 import javafx.geometry.Point2D;
 import javafx.scene.control.TextField;
@@ -21,7 +21,7 @@ public class AutocompleteField extends AutocompleteInput {
         final var caretBounds = ((TextFieldSkin) input.getSkin()).getCharacterBounds(input.getCaretPosition());
         return new Point2D(textFieldBounds.getMinX() + caretBounds.getMinX(), textFieldBounds.getMaxY());
     }
-    
+
     @Override
     TextInputControl createInput() {
         return new TextField();

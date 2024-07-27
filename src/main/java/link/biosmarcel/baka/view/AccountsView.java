@@ -15,6 +15,8 @@ import javafx.util.StringConverter;
 import link.biosmarcel.baka.ApplicationState;
 import link.biosmarcel.baka.data.Account;
 import link.biosmarcel.baka.data.ImportFormat;
+import link.biosmarcel.baka.view.component.BakaTab;
+import link.biosmarcel.baka.view.model.AccountFX;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -26,37 +28,37 @@ import java.util.List;
  * imports and more.
  */
 public class AccountsView extends BakaTab {
-    private final TableView<AccountFX> accountTable;
+                        private final TableView<AccountFX> accountTable;
 
     public AccountsView(final ApplicationState state) {
-        super("Accounts", state);
+                            super("Accounts", state);
 
-        this.accountTable = new TableView<>();
+                            this.accountTable = new TableView<>();
 
-        final Callback<TableColumn<AccountFX, @Nullable String>, TableCell<AccountFX, @Nullable String>> simpleStringColumnFactory = __ ->
-                new TextFieldTableCell<>(new StringConverter<String>() {
-                    @Override
-                    public @Nullable String toString(final @Nullable String name) {
-                        return name;
-                    }
+                            final Callback<TableColumn<AccountFX, @Nullable String>, TableCell<AccountFX, @Nullable String>> simpleStringColumnFactory = __ ->
+                                    new TextFieldTableCell<>(new StringConverter<String>() {
+                                        @Override
+                                        public @Nullable String toString(final @Nullable String name) {
+                                            return name;
+                                        }
 
-                    @Override
-                    public @Nullable String fromString(final @Nullable String string) {
-                        return string;
-                    }
-                });
-        final Callback<TableColumn<AccountFX, @Nullable ImportFormat>, TableCell<AccountFX, @Nullable ImportFormat>> importFormatColumnFactory = __ ->
-                new ComboBoxTableCell<>(new StringConverter<ImportFormat>() {
-                    @Override
-                    public @Nullable String toString(final @Nullable ImportFormat object) {
-                        if (object != null) {
-                            return object.toString();
-                        }
-                        return "";
-                    }
+                                        @Override
+                                        public @Nullable String fromString(final @Nullable String string) {
+                                            return string;
+                                        }
+                                    });
+                            final Callback<TableColumn<AccountFX, @Nullable ImportFormat>, TableCell<AccountFX, @Nullable ImportFormat>> importFormatColumnFactory = __ ->
+                                    new ComboBoxTableCell<>(new StringConverter<ImportFormat>() {
+                                        @Override
+                                        public @Nullable String toString(final @Nullable ImportFormat object) {
+                                            if (object != null) {
+                                                return object.toString();
+                                            }
+                                            return "";
+                                        }
 
-                    @Override
-                    public @Nullable ImportFormat fromString(final @Nullable String string) {
+                                        @Override
+                                        public @Nullable ImportFormat fromString(final @Nullable String string) {
                         if (string != null && string.isBlank()) {
                             return ImportFormat.valueOf(string);
                         }
@@ -143,12 +145,12 @@ public class AccountsView extends BakaTab {
     }
 
     @Override
-    protected void onTabActivated() {
+    public void onTabActivated() {
         accountTable.getItems().setAll(convertAccounts(state.data.accounts));
     }
 
     @Override
-    protected void onTabDeactivated() {
+    public void onTabDeactivated() {
         accountTable.getItems().clear();
     }
 }

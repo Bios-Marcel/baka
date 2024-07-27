@@ -12,4 +12,6 @@ module link.biosmarcel.baka {
     exports link.biosmarcel.baka.data;
     exports link.biosmarcel.baka.filter;
     exports link.biosmarcel.baka.view;
+    exports link.biosmarcel.baka.view.model;
+    exports link.biosmarcel.baka.view.component;
 }

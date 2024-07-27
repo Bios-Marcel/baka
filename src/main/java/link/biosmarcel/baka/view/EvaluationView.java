@@ -20,6 +20,8 @@ import javafx.util.Duration;
 import javafx.util.StringConverter;
 import link.biosmarcel.baka.ApplicationState;
 import link.biosmarcel.baka.data.Account;
+import link.biosmarcel.baka.view.component.BakaTab;
+import link.biosmarcel.baka.view.component.PatchedStackedBarChart;
 import org.jspecify.annotations.Nullable;
 
 import java.math.BigDecimal;
@@ -310,7 +312,7 @@ public class EvaluationView extends BakaTab {
     }
 
     @Override
-    protected void onTabActivated() {
+    public void onTabActivated() {
         final var oldSelection = accountFilter.getSelectionModel().getSelectedItem();
 
         accounts.clear();
@@ -334,7 +336,7 @@ public class EvaluationView extends BakaTab {
     }
 
     @Override
-    protected void onTabDeactivated() {
+    public void onTabDeactivated() {
         startDate.removeListener(dateChangeListener);
         endDate.removeListener(dateChangeListener);
         accountFilter.getSelectionModel().selectedItemProperty().removeListener(accountChangeListener);

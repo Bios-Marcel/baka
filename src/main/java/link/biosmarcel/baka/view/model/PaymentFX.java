@@ -1,4 +1,4 @@
-package link.biosmarcel.baka.view;
+package link.biosmarcel.baka.view.model;
 
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.StringBinding;
@@ -11,6 +11,7 @@ import javafx.collections.ObservableList;
 import link.biosmarcel.baka.data.Account;
 import link.biosmarcel.baka.data.Classification;
 import link.biosmarcel.baka.data.Payment;
+import link.biosmarcel.baka.view.PaymentsView;
 import org.jspecify.annotations.Nullable;
 
 import java.math.BigDecimal;

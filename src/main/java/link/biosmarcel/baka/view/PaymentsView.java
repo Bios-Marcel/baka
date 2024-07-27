@@ -22,6 +22,11 @@ import link.biosmarcel.baka.data.ClassificationRule;
 import link.biosmarcel.baka.data.Payment;
 import link.biosmarcel.baka.filter.FilterAutocompleteGenerator;
 import link.biosmarcel.baka.filter.IncompleteQueryException;
+import link.biosmarcel.baka.view.component.AutocompleteField;
+import link.biosmarcel.baka.view.component.AutocompleteHelper;
+import link.biosmarcel.baka.view.component.BakaTab;
+import link.biosmarcel.baka.view.component.TableCellRenderer;
+import link.biosmarcel.baka.view.model.PaymentFX;
 
 import java.io.File;
 import java.math.BigDecimal;
@@ -211,7 +216,7 @@ public class PaymentsView extends BakaTab {
     }
 
     @Override
-    protected void onTabActivated() {
+    public void onTabActivated() {
         data.setAll(convertPayments(state.data.payments));
         table.sort();
         tagCompletion.update();
@@ -233,7 +238,7 @@ public class PaymentsView extends BakaTab {
     }
 
     @Override
-    protected void onTabDeactivated() {
+    public void onTabDeactivated() {
         details.activePayment.unbind();
 
         data.clear();

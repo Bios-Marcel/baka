@@ -1,4 +1,4 @@
-package link.biosmarcel.baka.view;
+package link.biosmarcel.baka.view.component;
 
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.StringProperty;

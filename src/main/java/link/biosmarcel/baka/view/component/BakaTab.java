@@ -1,4 +1,4 @@
-package link.biosmarcel.baka.view;
+package link.biosmarcel.baka.view.component;
 
 import javafx.scene.control.Tab;
 import link.biosmarcel.baka.ApplicationState;
@@ -24,12 +24,12 @@ public abstract class BakaTab extends Tab {
     /**
      * Called once the tab is entered. Should be used to load the UI with data and register any listeners.
      */
-    abstract void onTabActivated();
+    public abstract void onTabActivated();
 
     /**
      * Called once the tab is exited. Should be used to remove any data and active listeners.
      */
-    abstract void onTabDeactivated();
+    public abstract void onTabDeactivated();
 
     /**
      * Views have the option to perform a store + commit upon this invocation. When save is called should not be the

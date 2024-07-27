@@ -8,6 +8,8 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.TextFormatter;
 import javafx.scene.layout.HBox;
 import javafx.util.StringConverter;
+import link.biosmarcel.baka.view.component.AutocompleteField;
+import link.biosmarcel.baka.view.model.ClassificationFX;
 import org.jspecify.annotations.Nullable;
 
 import java.math.BigDecimal;

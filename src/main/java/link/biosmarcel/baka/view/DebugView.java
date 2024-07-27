@@ -8,6 +8,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import link.biosmarcel.baka.ApplicationState;
 import link.biosmarcel.baka.data.Payment;
+import link.biosmarcel.baka.view.component.BakaTab;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -67,12 +68,12 @@ public class DebugView extends BakaTab {
     }
 
     @Override
-    void onTabActivated() {
+    public void onTabActivated() {
 
     }
 
     @Override
-    void onTabDeactivated() {
+    public void onTabDeactivated() {
 
     }
 }

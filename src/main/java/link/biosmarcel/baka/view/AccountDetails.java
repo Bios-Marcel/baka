@@ -8,6 +8,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.GridPane;
 import link.biosmarcel.baka.data.ImportFormat;
+import link.biosmarcel.baka.view.model.AccountFX;
 import org.jspecify.annotations.Nullable;
 
 public class AccountDetails extends GridPane {

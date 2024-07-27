@@ -12,6 +12,11 @@ import link.biosmarcel.baka.ApplicationState;
 import link.biosmarcel.baka.data.ClassificationRule;
 import link.biosmarcel.baka.filter.FilterAutocompleteGenerator;
 import link.biosmarcel.baka.filter.IncompleteQueryException;
+import link.biosmarcel.baka.view.component.AutocompleteField;
+import link.biosmarcel.baka.view.component.AutocompleteHelper;
+import link.biosmarcel.baka.view.component.AutocompleteTextArea;
+import link.biosmarcel.baka.view.component.BakaTab;
+import link.biosmarcel.baka.view.model.ClassificationRuleFX;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -201,7 +206,7 @@ public class ClassificationsView extends BakaTab {
     }
 
     @Override
-    protected void onTabActivated() {
+    public void onTabActivated() {
         tagCompletion.update();
 
         listView.getItems().setAll(convertRules(state.data.classificationRules));
@@ -215,7 +220,7 @@ public class ClassificationsView extends BakaTab {
     }
 
     @Override
-    protected void onTabDeactivated() {
+    public void onTabDeactivated() {
         listView.getItems().clear();
     }
 

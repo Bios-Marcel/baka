@@ -11,6 +11,8 @@ import javafx.scene.input.KeyCombination;
 import javafx.stage.Stage;
 import link.biosmarcel.baka.data.Data;
 import link.biosmarcel.baka.view.*;
+import link.biosmarcel.baka.view.component.BakaTab;
+import link.biosmarcel.baka.view.component.PopupPane;
 import org.eclipse.store.storage.embedded.configuration.types.EmbeddedStorageConfiguration;
 
 import java.nio.file.Path;
