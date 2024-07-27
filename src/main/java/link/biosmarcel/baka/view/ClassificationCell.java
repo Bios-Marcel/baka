@@ -60,7 +60,6 @@ public class ClassificationCell extends ListCell<@Nullable ClassificationFX> {
         }
 
         if (change.getText().chars().allMatch(value -> {
-            System.out.println(value);
             return Character.isDigit(value)
                     || CURRENCY_FORMAT.getDecimalFormatSymbols().getDecimalSeparator() == value
                     || CURRENCY_FORMAT.getDecimalFormatSymbols().getGroupingSeparator() == value
@@ -73,11 +72,13 @@ public class ClassificationCell extends ListCell<@Nullable ClassificationFX> {
     };
 
     private final Node renderer;
-    private final TextField tagField;
+    private final AutocompleteField tagField;
     private final TextField amountField;
     private @Nullable ClassificationFX lastItem;
 
-    public ClassificationCell() {
+    public ClassificationCell(
+            final TagCompletion tagCompletion
+    ) {
         amountField = new TextField();
 
         final TextFormatter<BigDecimal> formatter = new TextFormatter<>(CONVERTER, BigDecimal.ZERO, FILTER);
@@ -99,31 +100,23 @@ public class ClassificationCell extends ListCell<@Nullable ClassificationFX> {
         amountField.focusedProperty().addListener((_, _, newValue) -> {
             if (!newValue) {
                 amountField.commitValue();
-            } else {
-                if (lastItem != null && !isSelected()) {
-                    getListView().getSelectionModel().select(lastItem);
-                }
             }
         });
-        tagField = new TextField();
+
+        tagField = new AutocompleteField(new char[]{' '}, tagCompletion::match);
+        tagField.setInsertSpaceAfterCompletion(false);
         tagField.focusedProperty().addListener((_, _, newValue) -> {
-            if (newValue && lastItem != null && !isSelected()) {
-                getListView().getSelectionModel().select(lastItem);
+            if (!newValue) {
+                tagField.textProperty().set(tagField.textProperty().get().strip());
             }
         });
 
         final var amountLabel = new Label("Amount:");
         final var tagLabel = new Label("Tag:");
-        renderer = new HBox(5.0, tagLabel, tagField, amountLabel, amountField);
+        renderer = new HBox(5.0, tagLabel, tagField.getNode(), amountLabel, amountField);
         amountLabel.setMaxHeight(Double.MAX_VALUE);
         tagLabel.setMaxHeight(Double.MAX_VALUE);
         setText(null);
-    }
-
-    @Override
-    public void requestFocus() {
-        System.out.println("Focus");
-        tagField.requestFocus();
     }
 
     @Override

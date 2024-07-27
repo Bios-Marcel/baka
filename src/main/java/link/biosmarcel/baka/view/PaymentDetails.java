@@ -8,7 +8,6 @@ import javafx.scene.control.Cell;
 import javafx.scene.control.ListView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-import link.biosmarcel.baka.ApplicationState;
 import link.biosmarcel.baka.data.Classification;
 import org.jspecify.annotations.Nullable;
 
@@ -17,18 +16,16 @@ import java.util.Objects;
 public class PaymentDetails extends VBox {
     public final ObjectProperty<@Nullable PaymentFX> activePayment = new SimpleObjectProperty<>();
     public final BooleanProperty disableComponents = new SimpleBooleanProperty(true);
-    private final ApplicationState state;
 
-    public PaymentDetails(final ApplicationState state) {
-        this.state = state;
-
+    public PaymentDetails(final TagCompletion tagCompletion) {
         final var classificationsList = new ListView<ClassificationFX>();
         classificationsList.disableProperty().bind(disableComponents);
-        classificationsList.setCellFactory(_ -> new ClassificationCell());
+        classificationsList.setCellFactory(_ -> new ClassificationCell(tagCompletion));
 
         activePayment.addListener((_, oldValue, newValue) -> {
             if (oldValue != null) {
                 oldValue.classifications.forEach(ClassificationFX::apply);
+                oldValue.classificationRenderValue.invalidate();
             }
 
             if (newValue == null) {
@@ -38,6 +35,8 @@ public class PaymentDetails extends VBox {
                 disableComponents.set(false);
                 classificationsList.setItems(newValue.classifications);
             }
+
+            tagCompletion.update();
         });
 
         final var createButton = new Button("New");
@@ -97,6 +96,7 @@ public class PaymentDetails extends VBox {
         final var selected = activePayment.get();
         if (selected != null) {
             selected.classifications.forEach(ClassificationFX::apply);
+            selected.classificationRenderValue.invalidate();
         }
     }
 }

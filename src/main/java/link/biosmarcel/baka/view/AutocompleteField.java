@@ -17,11 +17,11 @@ public class AutocompleteField extends AutocompleteInput {
 
     @Override
     Point2D computePopupLocation() {
-        final var textFieldBounds = input.getBoundsInParent();
+        final var textFieldBounds = input.localToScene(input.getBoundsInLocal());
         final var caretBounds = ((TextFieldSkin) input.getSkin()).getCharacterBounds(input.getCaretPosition());
         return new Point2D(textFieldBounds.getMinX() + caretBounds.getMinX(), textFieldBounds.getMaxY());
     }
-
+    
     @Override
     TextInputControl createInput() {
         return new TextField();

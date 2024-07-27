@@ -14,7 +14,9 @@ import link.biosmarcel.baka.filter.FilterAutocompleteGenerator;
 import link.biosmarcel.baka.filter.IncompleteQueryException;
 import org.jspecify.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 public class ClassificationsView extends BakaTab {
     private final ListView<ClassificationRuleFX> listView;
@@ -22,11 +24,13 @@ public class ClassificationsView extends BakaTab {
     private final AutocompleteField tagField;
     private final AutocompleteTextArea queryField;
     private final ReadOnlyObjectProperty<@Nullable ClassificationRuleFX> selectedRuleProperty;
+    private final TagCompletion tagCompletion;
 
 
     public ClassificationsView(ApplicationState state) {
         super("Classifications", state);
 
+        tagCompletion = new TagCompletion(state);
         listView = new ListView<>();
 
         // FIXME Abstract this away for when we have multiple list views.
@@ -45,13 +49,8 @@ public class ClassificationsView extends BakaTab {
 
         selectedRuleProperty = listView.getSelectionModel().selectedItemProperty();
         nameField = new TextField();
-        tagField = new AutocompleteField(new char[0], string -> {
-            final var lowered = string.toLowerCase().stripLeading();
-            return availableTags.stream().filter(tag -> tag.startsWith(lowered) && !tag.equals(lowered)).toList();
-        });
+        tagField = new AutocompleteField(new char[]{' '}, tagCompletion::match);
         tagField.setInsertSpaceAfterCompletion(false);
-        // necessary to prevent the popup from clashing with queryField.
-//        tagField.setViewOrder(-2);
 
         final PaymentFilter filter = new PaymentFilter();
         queryField = new AutocompleteTextArea(
@@ -100,7 +99,7 @@ public class ClassificationsView extends BakaTab {
                 queryField.textProperty().bindBidirectional(newValue.query);
             }
 
-            addTagsFromRules();
+            tagCompletion.update();
         });
         nameField.disableProperty().bind(disableInputs);
         tagField.disableProperty().bind(disableInputs);
@@ -201,28 +200,9 @@ public class ClassificationsView extends BakaTab {
         return newFXElements;
     }
 
-    private final Set<String> availableTags = new HashSet<>();
-
-    private void addTagsFromRules() {
-        for (final var rule : state.data.classificationRules) {
-            if (!rule.tag.isBlank()) {
-                // We temporarily strip here, as the final stripping happens on save.
-                availableTags.add(rule.tag.strip().toLowerCase());
-            }
-        }
-    }
-
     @Override
     protected void onTabActivated() {
-        availableTags.clear();
-        for (final var payment : state.data.payments) {
-            for (final var classification : payment.classifications) {
-                if (classification.tag != null && !classification.tag.isBlank()) {
-                    availableTags.add(classification.tag.toLowerCase());
-                }
-            }
-        }
-        addTagsFromRules();
+        tagCompletion.update();
 
         listView.getItems().setAll(convertRules(state.data.classificationRules));
 
