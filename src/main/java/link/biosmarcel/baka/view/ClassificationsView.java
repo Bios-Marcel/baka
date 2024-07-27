@@ -21,14 +21,16 @@ import java.util.List;
 public class ClassificationsView extends BakaTab {
     private final ListView<ClassificationRuleFX> listView;
     private final TextField nameField;
-    private final TextField tagField;
+    private final AutocompleteField tagField;
     private final AutocompleteTextArea queryField;
     private final ReadOnlyObjectProperty<@Nullable ClassificationRuleFX> selectedRuleProperty;
+    private final TagCompletion tagCompletion;
 
 
     public ClassificationsView(ApplicationState state) {
         super("Classifications", state);
 
+        tagCompletion = new TagCompletion(state);
         listView = new ListView<>();
 
         // FIXME Abstract this away for when we have multiple list views.
@@ -47,7 +49,8 @@ public class ClassificationsView extends BakaTab {
 
         selectedRuleProperty = listView.getSelectionModel().selectedItemProperty();
         nameField = new TextField();
-        tagField = new TextField();
+        tagField = new AutocompleteField(new char[]{' '}, tagCompletion::match);
+        tagField.setInsertSpaceAfterCompletion(false);
 
         final PaymentFilter filter = new PaymentFilter();
         queryField = new AutocompleteTextArea(
@@ -85,8 +88,8 @@ public class ClassificationsView extends BakaTab {
                 oldValue.tag.unbindBidirectional(tagField.textProperty());
                 oldValue.query.unbindBidirectional(queryField.textProperty());
 
-                nameField.setText("");
-                tagField.setText("");
+                nameField.textProperty().set("");
+                tagField.textProperty().set("");
                 queryField.textProperty().set("");
             }
 
@@ -95,6 +98,8 @@ public class ClassificationsView extends BakaTab {
                 tagField.textProperty().bindBidirectional(newValue.tag);
                 queryField.textProperty().bindBidirectional(newValue.query);
             }
+
+            tagCompletion.update();
         });
         nameField.disableProperty().bind(disableInputs);
         tagField.disableProperty().bind(disableInputs);
@@ -104,7 +109,7 @@ public class ClassificationsView extends BakaTab {
         details.add(new Label("Name"), 0, 0);
         details.add(nameField, 1, 0);
         details.add(new Label("Tag"), 0, 1);
-        details.add(tagField, 1, 1);
+        details.add(tagField.getNode(), 1, 1);
         details.add(new Label("Query"), 0, 2);
         details.add(queryField.getNode(), 1, 2);
 
@@ -197,6 +202,8 @@ public class ClassificationsView extends BakaTab {
 
     @Override
     protected void onTabActivated() {
+        tagCompletion.update();
+
         listView.getItems().setAll(convertRules(state.data.classificationRules));
 
         if (!listView.getItems().isEmpty()) {
@@ -217,6 +224,12 @@ public class ClassificationsView extends BakaTab {
         final var selected = selectedRuleProperty.get();
         if (selected != null) {
             selected.apply();
+        }
+
+        // We currently directly bind the property, so any entry is accepted as is, hence we have to correct it
+        // before saving for now. This is an implementation detail however and should not cause breakage later on.
+        for (final var rule : state.data.classificationRules) {
+            rule.tag = rule.tag.strip();
         }
 
         // Just storing the classifications will cause issues if it hasn't been persisted before.

@@ -65,7 +65,8 @@ public class Main extends Application {
             }
         });
 
-        final Scene scene = new Scene(tabs, 800, 600);
+        final var popupPane = new PopupPane(tabs);
+        final Scene scene = new Scene(popupPane, 800, 600);
         scene.getStylesheets().add(Objects.requireNonNull(Main.class.getResource("base.css")).toExternalForm());
         stage.setTitle("Baka");
         stage.getIcons().add(new Image(Objects.requireNonNull(getClass().getResourceAsStream("icon.png"))));

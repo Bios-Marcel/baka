@@ -21,7 +21,7 @@ public class AutocompleteTextArea extends AutocompleteInput {
         // Required, as the bounds will be outdated otherwise.
         input.layout();
 
-        final var textFieldBounds = input.getBoundsInParent();
+        final var textFieldBounds = input.localToScene(input.getBoundsInLocal());
         final var bounds = ((TextAreaSkin) input.getSkin()).getCaretBounds();
         return new Point2D(textFieldBounds.getMinX() + bounds.getMinX(), textFieldBounds.getMinY() + bounds.getMaxY());
     }

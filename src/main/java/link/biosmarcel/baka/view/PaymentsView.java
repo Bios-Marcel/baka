@@ -37,10 +37,12 @@ public class PaymentsView extends BakaTab {
     private final MenuButton importButton;
     private final ObservableList<PaymentFX> data = FXCollections.observableArrayList();
     private final FilteredList<PaymentFX> filteredData = new FilteredList<>(data);
+    private final TagCompletion tagCompletion;
 
     public PaymentsView(ApplicationState state) {
         super("Payments", state);
 
+        this.tagCompletion = new TagCompletion(state);
         this.table = new TableView<>();
 
         final TableColumn<PaymentFX, BigDecimal> amountColumn = new TableColumn<>("Amount");
@@ -98,7 +100,7 @@ public class PaymentsView extends BakaTab {
             table.sort();
         });
 
-        details = new PaymentDetails(state);
+        details = new PaymentDetails(tagCompletion);
 
         final var filterField = new AutocompleteField(
                 new char[]{')', '(', ' ', '\n'},
@@ -212,6 +214,7 @@ public class PaymentsView extends BakaTab {
     protected void onTabActivated() {
         data.setAll(convertPayments(state.data.payments));
         table.sort();
+        tagCompletion.update();
 
         details.activePayment.bind(table.getSelectionModel().selectedItemProperty());
 
@@ -235,6 +238,13 @@ public class PaymentsView extends BakaTab {
 
         data.clear();
         importButton.getItems().clear();
+    }
+
+    @Override
+    public void save() {
+        details.save();
+        state.storer.store(state.data);
+        state.storer.commit();
     }
 }
 

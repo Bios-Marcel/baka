@@ -4,14 +4,13 @@ import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.StringProperty;
 import javafx.geometry.Point2D;
-import javafx.scene.Node;
+import javafx.scene.Scene;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.TextInputControl;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.Background;
-import javafx.scene.layout.Pane;
 import javafx.scene.layout.Region;
 import javafx.scene.paint.Color;
 import org.jspecify.annotations.Nullable;
@@ -21,33 +20,27 @@ import java.util.List;
 import java.util.function.Function;
 
 public abstract class AutocompleteInput {
-    private final Pane pane;
     private final ListView<String> completionList;
     private final Function<String, List<String>> autocompleteGenerator;
     private final char[] tokenSeparators;
+    private boolean insertSpaceAfterCompletion = true;
 
     protected final TextInputControl input;
 
     public AutocompleteInput(
             final char[] tokenSeparators,
             final Function<String, List<String>> autocompleteGenerator) {
-        pane = new Pane();
-        input = createInput();
-        completionList = new ListView<>();
         this.tokenSeparators = tokenSeparators;
         this.autocompleteGenerator = autocompleteGenerator;
-
-        // This is what is the Z-Index on the web. It allows us to render our popup above everything else.
-        pane.getChildren().add(input);
-        pane.getChildren().add(completionList);
-        pane.maxHeightProperty().bind(input.heightProperty());
-        pane.maxWidthProperty().bind(input.widthProperty());
+        input = createInput();
+        completionList = new ListView<>();
 
         completionList.setFixedCellSize(35.0);
         completionList.setMinHeight(completionList.getFixedCellSize() + 2);
         completionList.setMaxHeight(8 * completionList.getFixedCellSize() + 2);
         completionList.setBackground(Background.fill(Color.WHITE));
         completionList.setFocusTraversable(false);
+        completionList.setManaged(false);
         completionList.setVisible(false);
         completionList.setCellFactory(_ -> {
             final ListCell<@Nullable String> cell = new ListCell<>() {
@@ -130,7 +123,10 @@ public abstract class AutocompleteInput {
         }
 
         final var completable = textBeforeCaret.substring(autocompleteTo + 1);
-        String textToInsert = selectedItem.substring(completable.length()) + " ";
+        String textToInsert = selectedItem.substring(completable.length());
+        if (insertSpaceAfterCompletion) {
+            textToInsert = textToInsert + " ";
+        }
 
         if (input.getSelection().getLength() > 0) {
             input.replaceSelection(textToInsert);
@@ -164,8 +160,11 @@ public abstract class AutocompleteInput {
     }
 
     private void hidePopup() {
-        toBack();
-        completionList.setVisible(false);
+        final Scene scene = completionList.getScene();
+        if (scene == null) {
+            return;
+        }
+        ((PopupPane) scene.getRoot()).hidePopup();
     }
 
     private void refreshPopup() {
@@ -180,31 +179,18 @@ public abstract class AutocompleteInput {
             return;
         }
 
+
         // +2 to prevent an unnecessary scrollbar
         if (completionList.getSelectionModel().getSelectedIndex() == -1) {
             completionList.getSelectionModel().select(0);
         }
 
+        ((PopupPane) input.getScene().getRoot()).showPopup(completionList);
         completionList.setPrefHeight(completionList.getItems().size() * completionList.getFixedCellSize() + 2);
 
         final var location = computePopupLocation();
-        completionList.setTranslateX(location.getX());
-        completionList.setTranslateY(location.getY());
-
-        var bounds = completionList.localToScene(completionList.getBoundsInLocal());
-        final var xOutOfBounds = bounds.getMaxX() - completionList.getScene().getWidth();
-        if (xOutOfBounds > 0) {
-            completionList.setTranslateX(completionList.getTranslateX() - xOutOfBounds);
-        }
-
-        // We are currently not treating y out of bounds since it is a bit more complicated, as the height needs to
-        // be dynamic. The width is currently static ... which is yet another issue.
-
-        // Since we are using a hacky way of rendering the popup, we need to make sure it doesn't render
-        // behind other components, as it is part of the Pane, but outside the pane bounds.
-        toFront();
-
-        completionList.setVisible(true);
+        completionList.setLayoutX(location.getX());
+        completionList.setLayoutY(location.getY());
     }
 
     public StringProperty textProperty() {
@@ -229,23 +215,16 @@ public abstract class AutocompleteInput {
         input.getStyleClass().add("text-field-error");
     }
 
-    private void toFront() {
-        recursivelySetViewOrder(completionList, -1);
+    public void setInsertSpaceAfterCompletion(final boolean insertSpaceAfterCompletion) {
+        this.insertSpaceAfterCompletion = insertSpaceAfterCompletion;
     }
 
-    private void toBack() {
-        recursivelySetViewOrder(completionList, 0);
-    }
-
-    private void recursivelySetViewOrder(final Node node, final double viewOrder) {
-        node.setViewOrder(viewOrder);
-        if (node.getParent() != null) {
-            recursivelySetViewOrder(node.getParent(), viewOrder);
-        }
+    public void requestFocus() {
+        input.requestFocus();
     }
 
     public Region getNode() {
-        return pane;
+        return input;
     }
 
     abstract Point2D computePopupLocation();
