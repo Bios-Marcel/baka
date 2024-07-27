@@ -6,8 +6,10 @@ import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
+import javafx.scene.Node;
 import javafx.scene.chart.CategoryAxis;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.NumberAxis;
@@ -16,6 +18,7 @@ import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import javafx.scene.text.Text;
 import javafx.util.Duration;
 import javafx.util.StringConverter;
 import link.biosmarcel.baka.ApplicationState;
@@ -25,6 +28,7 @@ import link.biosmarcel.baka.view.component.PatchedStackedBarChart;
 import org.jspecify.annotations.Nullable;
 
 import java.math.BigDecimal;
+import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAdjusters;
@@ -49,6 +53,8 @@ public class EvaluationView extends BakaTab {
      * This account will be abused to specify we want to show data across all accounts. This is due to the fact that null misbehaves.
      */
     private final Account ALL_ACCOUNTS = new Account();
+    // FIXME For some reason, on my machine this returns a UK format.
+    private final DecimalFormat CURRENCY_FORMAT = (DecimalFormat) DecimalFormat.getCurrencyInstance();
 
     public EvaluationView(ApplicationState state) {
         super("Evaluation", state);
@@ -62,11 +68,28 @@ public class EvaluationView extends BakaTab {
 
         this.accounts = FXCollections.observableArrayList();
 
+        final ListChangeListener<? super Node> addXAxisStyleListener = c -> {
+            while (c.next()) {
+                if (c.wasAdded()) {
+                    for (Node mark : c.getAddedSubList()) {
+                        if (mark instanceof Text) {
+                            mark.getStyleClass().add("label-x-axis");
+                            break;
+                        }
+                    }
+                }
+            }
+        };
+
         final var spendingChartAmountAxis = new NumberAxis();
         spendingChartAmountAxis.setForceZeroInRange(true);
+        spendingChartAmountAxis.getChildrenUnmodifiable().addListener(addXAxisStyleListener);
+
+        final CategoryAxis spendingsXAxis = new CategoryAxis();
+        spendingsXAxis.getChildrenUnmodifiable().addListener(addXAxisStyleListener);
 
         final PatchedStackedBarChart<String, Number> spendingsChart = new PatchedStackedBarChart<>(
-                new CategoryAxis(),
+                spendingsXAxis,
                 spendingChartAmountAxis,
                 spendingsData
         );
@@ -89,6 +112,8 @@ public class EvaluationView extends BakaTab {
                 return 0;
             }
         });
+
+        balanceChartDayAxis.getChildrenUnmodifiable().addListener(addXAxisStyleListener);
         balanceChartDayAxis.setTickUnit(1.0);
         balanceChartDayAxis.setMinorTickVisible(false);
         balanceChartDayAxis.setAutoRanging(false);
@@ -97,6 +122,7 @@ public class EvaluationView extends BakaTab {
 
         final var balanceChartAmountAxis = new NumberAxis();
         balanceChartAmountAxis.setForceZeroInRange(false);
+        balanceChartAmountAxis.getChildrenUnmodifiable().addListener(addXAxisStyleListener);
 
         final LineChart<Number, Number> balanceChart = new LineChart<>(
                 balanceChartDayAxis,
@@ -270,6 +296,8 @@ public class EvaluationView extends BakaTab {
         final List<XYChart.Series<String, Number>> fragments = new ArrayList<>();
         final var endYear = endDate.get().getYear();
         final var endMonth = endDate.get().getMonth().getValue();
+
+        final Map<String, String> monthKeys = computeMonthKeys(classificationToMonthToMoney);
         for (final var category : classificationToMonthToMoney.entrySet()) {
             final XYChart.Series<String, Number> categorySeries = new XYChart.Series<>();
             categorySeries.setName(category.getKey());
@@ -281,15 +309,16 @@ public class EvaluationView extends BakaTab {
                     month.getMonthValue() <= endMonth && month.getYear() <= endYear;
                     month = month.plusMonths(1)
             ) {
+                final var renderedMonth = month.format(dateFormatter);
                 categorySeries.getData().add(new XYChart.Data<>(
-                        month.format(dateFormatter),
+                        monthKeys.getOrDefault(renderedMonth, renderedMonth + "\n" + CURRENCY_FORMAT.format(0)),
                         0
                 ));
             }
 
             for (final var monthToAmount : Objects.requireNonNull(category.getValue()).entrySet()) {
                 categorySeries.getData().add(new XYChart.Data<>(
-                        monthToAmount.getKey(),
+                        monthKeys.get(monthToAmount.getKey()),
                         // We render positive values for now on, as the chart renders a 1 pixel gap between the series otherwise.
                         monthToAmount.getValue().abs()
                 ));
@@ -309,6 +338,30 @@ public class EvaluationView extends BakaTab {
                 Tooltip.install(dataPoint.getNode(), tooltip);
             }
         }
+    }
+
+    /**
+     * This function will take all data and generate render values for each month that has any data.
+     * The format will be {@code YYYY MMM\nSum}. Values not present should display a default value.
+     */
+    private Map<String, String> computeMonthKeys(final Map<String, @Nullable Map<String, BigDecimal>> classificationToMonthToMoney) {
+        final Map<String, @Nullable BigDecimal> monthToSum = new HashMap<>();
+        for (final var category : classificationToMonthToMoney.entrySet()) {
+            for (final var monthToAmount : Objects.requireNonNull(category.getValue()).entrySet()) {
+                monthToSum.merge(monthToAmount.getKey(), monthToAmount.getValue(), (a, b) -> b.add(a));
+            }
+        }
+
+
+        final Map<String, String> monthRenderValues = new HashMap<>();
+        for (final var entry : monthToSum.entrySet()) {
+            if (entry.getValue() != null) {
+                monthRenderValues.put(entry.getKey(), entry.getKey() + "\n" + CURRENCY_FORMAT.format(entry.getValue().abs()));
+            } else {
+                monthRenderValues.put(entry.getKey(), entry.getKey() + "\n" + CURRENCY_FORMAT.format(0));
+            }
+        }
+        return monthRenderValues;
     }
 
     @Override
