@@ -31,4 +31,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.output_name }}
-          path: ./target/dist/${{ matrix.binary_name }}
+          path: ./build/dist/${{ matrix.binary_name }}
