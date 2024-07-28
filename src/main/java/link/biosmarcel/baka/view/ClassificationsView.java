@@ -237,8 +237,7 @@ public class ClassificationsView extends BakaTab {
             rule.tag = rule.tag.strip();
         }
 
-        // Just storing the classifications will cause issues if it hasn't been persisted before.
-        state.storer.store(state.data);
+        state.storer.store(state.data.classificationRules);
         state.storer.commit();
     }
 }
