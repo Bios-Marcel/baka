@@ -14,26 +14,44 @@ import link.biosmarcel.baka.view.*;
 import link.biosmarcel.baka.view.component.BakaTab;
 import link.biosmarcel.baka.view.component.PopupPane;
 import org.eclipse.store.storage.embedded.configuration.types.EmbeddedStorageConfiguration;
+import org.jspecify.annotations.Nullable;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Objects;
 
 public class Main extends Application {
-    private static Path getDataDir(final String... children) {
-        final String[] pathElements = new String[children.length + 1];
-        pathElements[0] = "baka";
-        System.arraycopy(children, 0, pathElements, 1, children.length);
-        return Paths.get(System.getenv("APPDATA"), pathElements);
+    private @Nullable String getParameter(final String key) {
+        boolean returnNext = false;
+        for (final var param : getParameters().getUnnamed()) {
+            if (key.equalsIgnoreCase(param)) {
+                returnNext = true;
+                continue;
+            }
+
+            if (returnNext) {
+                return param;
+            }
+        }
+
+        return null;
     }
 
     @Override
     public void start(Stage stage) {
+        final Path dataRootDir;
+        final String dataDirOverride = getParameter("--data-dir");
+        if (dataDirOverride != null) {
+            dataRootDir = Paths.get(dataDirOverride).toAbsolutePath();
+        } else {
+            dataRootDir = Paths.get(System.getenv("APPDATA"), "baka").toAbsolutePath();
+        }
+
         final Data data = new Data();
         final var storageManager = EmbeddedStorageConfiguration
                 .Builder()
-                .setStorageDirectory(getDataDir("storage_temp").toString())
-                .setBackupDirectory(getDataDir("backup_temp").toString())
+                .setStorageDirectory(Paths.get(dataRootDir.toString(), "storage").toString())
+                .setBackupDirectory(Paths.get(dataRootDir.toString(), "backup").toString())
                 .setChannelCount(1)
                 .createEmbeddedStorageFoundation()
                 //.onConnectionFoundation((connection) -> {
@@ -93,7 +111,7 @@ public class Main extends Application {
         stage.show();
     }
 
-    public static void main(String[] __) {
-        launch();
+    public static void main(String[] args) {
+        launch(args);
     }
 }
