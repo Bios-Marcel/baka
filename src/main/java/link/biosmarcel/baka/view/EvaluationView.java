@@ -31,6 +31,7 @@ import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoField;
 import java.time.temporal.TemporalAdjusters;
 import java.util.*;
 
@@ -200,8 +201,7 @@ public class EvaluationView extends BakaTab {
         // category to yyyy-MMM to amount.
         final Map<String, @Nullable Map<String, BigDecimal>> classificationToMonthToMoney = new HashMap<>();
 
-        BigDecimal balance = new BigDecimal("0");
-        final XYChart.Series<Number, Number> balanceSeries = new XYChart.Series<>();
+        var balance = new BigDecimal("0");
         balanceData.clear();
 
         var sortedStream = state.data.payments.stream();
@@ -217,6 +217,12 @@ public class EvaluationView extends BakaTab {
 
         final var startDateWithTime = startDate.get().atStartOfDay();
         final var endDateWithTime = endDate.get().atStartOfDay();
+
+        // We preallocate this and add it to the observable list as late as possible to speed up the view switch.
+        final var balanceSeriesData = new ArrayList<XYChart.Data<Number, Number>>(
+                (int) (endDateWithTime.getLong(ChronoField.EPOCH_DAY) - startDateWithTime.getLong(ChronoField.EPOCH_DAY) + 1)
+        );
+
         for (final var payment : sorted) {
             if (payment.effectiveDate.isBefore(startDateWithTime)) {
                 // If we only show a partial balance, we have to take into account old data, as we'll otherwise have
@@ -236,10 +242,10 @@ public class EvaluationView extends BakaTab {
                             + (1.0 / payment.effectiveDate.getMonth().length(payment.effectiveDate.toLocalDate().isLeapYear()) * payment.effectiveDate.getDayOfMonth());
             // We only want the latest datapoint for each point in time, to prevent having a day with 20 data points.
             // This also gets rid of unnecessary fluctuations.
-            if (!balanceSeries.getData().isEmpty() && balanceSeries.getData().getLast().getXValue().equals(chartX)) {
-                balanceSeries.getData().set(balanceSeries.getData().size() - 1, new XYChart.Data<>(chartX, balance));
+            if (!balanceSeriesData.isEmpty() && balanceSeriesData.getLast().getXValue().equals(chartX)) {
+                balanceSeriesData.set(balanceSeriesData.size() - 1, new XYChart.Data<>(chartX, balance));
             } else {
-                balanceSeries.getData().add(new XYChart.Data<>(chartX, balance));
+                balanceSeriesData.add(new XYChart.Data<>(chartX, balance));
             }
 
             // Separates balance from spendings.
@@ -279,6 +285,8 @@ public class EvaluationView extends BakaTab {
             }
         }
 
+        final XYChart.Series<Number, Number> balanceSeries = new XYChart.Series<>();
+        balanceSeries.getData().setAll(balanceSeriesData);
         if (!balanceSeries.getData().isEmpty()) {
             balanceLowerBound.setValue(Math.floor(balanceSeries.getData().getFirst().getXValue().doubleValue()));
             balanceUpperBound.setValue(Math.ceil(balanceSeries.getData().getLast().getXValue().doubleValue()));
