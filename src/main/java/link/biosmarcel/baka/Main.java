@@ -78,11 +78,11 @@ public class Main extends Application {
             state.debugMode.set(!state.debugMode.getValue());
         });
 
-        // FIXME This seems dumb?
-        Platform.setImplicitExit(true);
         stage.setOnCloseRequest(_ -> {
             // Triggers onTabDeactivate
             ((BakaTab) tabs.getSelectionModel().getSelectedItem()).save();
+            // We take a while to flush, but want to prevent the shutdown being perceived as slow.
+            stage.hide();
 
             // Not shutting down might result in data loss
             storageManager.shutdown();
