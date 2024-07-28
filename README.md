@@ -39,10 +39,12 @@ TODO
 ### Requirements
 
 * Required
-    * Maven
     * OpenJDK 22
 * Optional
-    * Building a windows installer: https://github.com/wixtoolset/wix3/releases
+    * Building a Windows installer: https://github.com/wixtoolset/wix3/releases
+
+The build system is provided with the code. While you could invoke a pre-installed `gradle`, it is recommended to
+use `./gradlew` instead, as this will get a specific gradle version, preventing compatibility issues.
 
 ### Debug Mode
 
