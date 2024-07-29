@@ -180,12 +180,13 @@ public abstract class AutocompleteInput {
         }
 
 
-        // +2 to prevent an unnecessary scrollbar
         if (completionList.getSelectionModel().getSelectedIndex() == -1) {
             completionList.getSelectionModel().select(0);
         }
 
         ((PopupPane) input.getScene().getRoot()).showPopup(completionList);
+
+        // +2 to prevent an unnecessary scrollbar
         completionList.setPrefHeight(completionList.getItems().size() * completionList.getFixedCellSize() + 2);
 
         final var location = computePopupLocation();
