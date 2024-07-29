@@ -26,4 +26,8 @@ public class AutocompleteField extends AutocompleteInput {
     TextInputControl createInput() {
         return new TextField();
     }
+
+    public void setPrefColumnCount(final int count) {
+        ((TextField) input).setPrefColumnCount(count);
+    }
 }

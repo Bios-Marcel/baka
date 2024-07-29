@@ -111,6 +111,7 @@ public class PaymentsView extends BakaTab {
                 new char[]{')', '(', ' ', '\n'},
                 new FilterAutocompleteGenerator(new PaymentFilter())::generate
         );
+        filterField.setPrefColumnCount(30);
         final var filter = new PaymentFilter();
 
         StringProperty filterError = new SimpleStringProperty();
