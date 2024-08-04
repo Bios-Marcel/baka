@@ -243,7 +243,7 @@ public class EvaluationView extends BakaTab {
             // We only want the latest datapoint for each point in time, to prevent having a day with 20 data points.
             // This also gets rid of unnecessary fluctuations.
             if (!balanceSeriesData.isEmpty() && balanceSeriesData.getLast().getXValue().equals(chartX)) {
-                balanceSeriesData.set(balanceSeriesData.size() - 1, new XYChart.Data<>(chartX, balance));
+                balanceSeriesData.getLast().setYValue(balance);
             } else {
                 balanceSeriesData.add(new XYChart.Data<>(chartX, balance));
             }
