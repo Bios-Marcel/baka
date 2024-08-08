@@ -19,6 +19,7 @@ import org.jspecify.annotations.Nullable;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Objects;
+import java.util.Locale;
 
 public class Main extends Application {
     private @Nullable String getParameter(final String key) {
@@ -37,6 +38,24 @@ public class Main extends Application {
         return null;
     }
 
+    private static String determineUserConfigLocation() {
+        // even win32 understands forward slashes as path separators now...
+        final var fallbackLocation = System.getProperty("user.home") + "/.config";
+        final var os = System.getProperty("os.name").toLowerCase(Locale.ENGLISH);
+        if (os.contains("mac") || os.contains("darwin")) {
+            return System.getProperty("user.home") + "/Library/Application Support";
+        }
+        if (os.contains("win")) {
+            final var appdata = System.getenv("APPDATA");
+            return appdata != null ? appdata : fallbackLocation;
+        }
+        if (os.contains("nux")) {
+            final var xdg_config = System.getenv("XDG_CONFIG_HOME");
+            return xdg_config != null ? xdg_config : fallbackLocation;
+        }
+        return fallbackLocation;
+    }
+
     @Override
     public void start(Stage stage) {
         final Path dataRootDir;
@@ -44,7 +63,8 @@ public class Main extends Application {
         if (dataDirOverride != null) {
             dataRootDir = Paths.get(dataDirOverride).toAbsolutePath();
         } else {
-            dataRootDir = Paths.get(System.getenv("APPDATA"), "baka").toAbsolutePath();
+            final var defaultUserConfigLocation = determineUserConfigLocation();
+            dataRootDir = Paths.get(defaultUserConfigLocation, "baka").toAbsolutePath();
         }
 
         final Data data = new Data();
