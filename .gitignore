@@ -12,6 +12,12 @@ target/
 *.iml
 *.ipr
 
+### Eclipse ###
+.project
+.classpath
+.settings/
+bin/
+
 ### VS Code ###
 .vscode/
 
