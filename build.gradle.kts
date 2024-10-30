@@ -13,8 +13,8 @@ dependencies {
     implementation("org.antlr:antlr4-runtime:4.13.1")
     implementation("org.jspecify:jspecify:0.3.0")
     implementation("org.apache.commons:commons-csv:1.11.0")
-    implementation("org.eclipse.store:storage-embedded:1.3.2")
-    implementation("org.eclipse.store:storage-embedded-configuration:1.3.2")
+    implementation("org.eclipse.store:storage-embedded:2.0.0")
+    implementation("org.eclipse.store:storage-embedded-configuration:2.0.0")
     implementation("org.slf4j:slf4j-nop:2.0.13")
 
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.10.0")
