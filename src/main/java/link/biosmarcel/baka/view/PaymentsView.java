@@ -35,6 +35,7 @@ import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 import java.util.function.BiFunction;
 
@@ -184,24 +185,34 @@ public class PaymentsView extends BakaTab {
     private void importHandler(final Account account, final BiFunction<Account, File, List<Payment>> importer) {
         final FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Import for account '%s'".formatted(account.name));
+
         final var initialDir = state.data.convenienceState.importDirectories.get(account);
         if (initialDir != null) {
             fileChooser.setInitialDirectory(new File(initialDir));
         } else if (state.data.convenienceState.lastImportPath != null) {
             fileChooser.setInitialDirectory(new File(state.data.convenienceState.lastImportPath));
         }
-        final var file = fileChooser.showOpenDialog(getTabPane().getScene().getWindow());
-        if (file == null) {
+        final var files = fileChooser.showOpenMultipleDialog(getTabPane().getScene().getWindow());
+        if (files == null || files.isEmpty()) {
             return;
         }
 
-        state.data.convenienceState.lastImportPath = file.getParent();
+        // Since it's assumed we can only pick files from one directory, we use the next best parent dir we can find.
+        final String dir = files.getFirst().getParent();
+        state.data.convenienceState.lastImportPath = dir;
         state.storer.store(state.data.convenienceState);
-        state.data.convenienceState.importDirectories.put(account, file.getParent());
+        state.data.convenienceState.importDirectories.put(account, dir);
         state.storer.store(state.data.convenienceState.importDirectories);
         state.storer.commit();
 
-        createPayments(importer.apply(account, file));
+        // We merge the files and do a single import.
+        final var newPayments = files.stream()
+                .flatMap(file -> importer.apply(account, file).stream())
+                // Since the files usually have consistent order, we sort, as adding together two files contents may
+                // produces an incorrect order.
+                .sorted(Comparator.comparing(payment -> payment.bookingDate))
+                .toList();
+        createPayments(newPayments);
     }
 
     private void createPayments(final Collection<Payment> newPayments) {
