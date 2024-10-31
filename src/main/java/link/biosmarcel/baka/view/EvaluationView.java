@@ -195,7 +195,6 @@ public class EvaluationView extends BakaTab {
 
     private void updateCharts() {
         final String unclassified = "unclassified";
-        final String ignore = "ignore";
         // The category axis expects a string. There's no way to easily change the data time and change how it is
         // rendered. As far as I can see, we'd have to write a completely custom axis. So instead we map from
         // category to yyyy-MMM to amount.
@@ -253,15 +252,16 @@ public class EvaluationView extends BakaTab {
                 continue;
             }
 
+            if(payment.ignoreSpending) {
+                continue;
+            }
+
             var leftOver = payment.amount;
             final String yyyyMM = payment.effectiveDate.format(dateFormatter);
             for (final var classification : payment.classifications) {
                 // Add to the negative amount
                 var amount = classification.amount.abs();
                 leftOver = leftOver.add(amount);
-                if (ignore.equals(classification.tag)) {
-                    continue;
-                }
 
                 var entry = classificationToMonthToMoney.computeIfAbsent(classification.tag, _ -> new TreeMap<>());
                 var value = entry.get(yyyyMM);

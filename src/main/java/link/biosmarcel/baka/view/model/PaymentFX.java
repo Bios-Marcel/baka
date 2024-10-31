@@ -2,10 +2,7 @@ package link.biosmarcel.baka.view.model;
 
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.StringBinding;
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.SimpleObjectProperty;
-import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.StringProperty;
+import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import link.biosmarcel.baka.data.Account;
@@ -26,6 +23,7 @@ import java.util.List;
 public class PaymentFX {
     public final Payment payment;
 
+    public final BooleanProperty ignoreSpending = new SimpleBooleanProperty();
     public final ObjectProperty<Account> account = new SimpleObjectProperty<>();
 
     public final ObjectProperty<BigDecimal> amount = new SimpleObjectProperty<>();
@@ -47,6 +45,7 @@ public class PaymentFX {
     public PaymentFX(final Payment payment) {
         this.payment = payment;
 
+        ignoreSpending.set(payment.ignoreSpending);
         account.set(payment.account);
         amount.set(payment.amount);
         reference.set(payment.reference);

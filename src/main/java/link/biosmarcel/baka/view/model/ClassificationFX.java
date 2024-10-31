@@ -1,9 +1,6 @@
 package link.biosmarcel.baka.view.model;
 
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.SimpleObjectProperty;
-import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.StringProperty;
+import javafx.beans.property.*;
 import link.biosmarcel.baka.data.Classification;
 
 import java.math.BigDecimal;

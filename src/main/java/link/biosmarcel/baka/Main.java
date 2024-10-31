@@ -13,6 +13,7 @@ import link.biosmarcel.baka.data.Data;
 import link.biosmarcel.baka.view.*;
 import link.biosmarcel.baka.view.component.BakaTab;
 import link.biosmarcel.baka.view.component.PopupPane;
+import org.eclipse.serializer.persistence.types.Storer;
 import org.eclipse.store.storage.embedded.configuration.types.EmbeddedStorageConfiguration;
 import org.jspecify.annotations.Nullable;
 
@@ -88,7 +89,14 @@ public class Main extends Application {
 
         data.init();
 
-        final ApplicationState state = new ApplicationState(storageManager, storageManager.createEagerStorer(), data);
+        final var storer = storageManager.createEagerStorer();
+
+        migrate(data);
+
+        storer.store(data);
+        storer.commit();
+
+        final ApplicationState state = new ApplicationState(storageManager, storer, data);
         final DebugView debugView = new DebugView(state);
         final TabPane tabs = new TabPane(
                 new PaymentsView(state),
@@ -132,6 +140,35 @@ public class Main extends Application {
 
         stage.sizeToScene();
         stage.show();
+    }
+
+    private static void migrate(Data data) {
+        //noinspection SwitchStatementWithTooFewBranches
+        switch (data.version) {
+            case 0: {
+                PAYMENT:
+                for (final var payment : data.payments) {
+                    final var classificationIter = payment.classifications.iterator();
+                    while (classificationIter.hasNext()) {
+                        final var classification = classificationIter.next();
+                        if ("ignore".equalsIgnoreCase(classification.tag)) {
+                            payment.ignoreSpending = true;
+                            classificationIter.remove();
+                            continue PAYMENT;
+                        }
+                    }
+                }
+
+                for (final var rule : data.classificationRules) {
+                    if ("ignore".equalsIgnoreCase(rule.tag)) {
+                        rule.tag = "";
+                        rule.ignoreSpending = true;
+                    }
+                }
+
+                data.version = 1;
+            }
+        }
     }
 
     public static void main(String[] args) {

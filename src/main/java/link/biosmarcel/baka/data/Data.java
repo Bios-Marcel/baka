@@ -8,6 +8,8 @@ import java.util.*;
  * By default, such fields will be {@code null}.
  */
 public class Data {
+    public int version;
+
     public ConvenienceState convenienceState = new ConvenienceState();
 
     /**

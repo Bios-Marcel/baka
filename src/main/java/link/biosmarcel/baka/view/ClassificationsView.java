@@ -18,16 +18,20 @@ import link.biosmarcel.baka.view.component.AutocompleteTextArea;
 import link.biosmarcel.baka.view.component.BakaTab;
 import link.biosmarcel.baka.view.model.ClassificationRuleFX;
 import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
 public class ClassificationsView extends BakaTab {
+    private static final Logger log = LoggerFactory.getLogger(ClassificationsView.class);
     private final ListView<ClassificationRuleFX> listView;
     private final TextField nameField;
     private final AutocompleteField tagField;
     private final AutocompleteTextArea queryField;
+    private final CheckBox ignoreSpendingCheckBox;
     private final ReadOnlyObjectProperty<@Nullable ClassificationRuleFX> selectedRuleProperty;
     private final TagCompletion tagCompletion;
 
@@ -56,6 +60,7 @@ public class ClassificationsView extends BakaTab {
         nameField = new TextField();
         tagField = new AutocompleteField(new char[]{' '}, tagCompletion::match);
         tagField.setInsertSpaceAfterCompletion(false);
+        ignoreSpendingCheckBox = new CheckBox("Ignore Spendings");
 
         final PaymentFilter filter = new PaymentFilter();
         queryField = new AutocompleteTextArea(
@@ -92,16 +97,19 @@ public class ClassificationsView extends BakaTab {
                 oldValue.name.unbindBidirectional(nameField.textProperty());
                 oldValue.tag.unbindBidirectional(tagField.textProperty());
                 oldValue.query.unbindBidirectional(queryField.textProperty());
+                oldValue.ignoreSpending.unbindBidirectional(ignoreSpendingCheckBox.selectedProperty());
 
                 nameField.textProperty().set("");
                 tagField.textProperty().set("");
                 queryField.textProperty().set("");
+                ignoreSpendingCheckBox.setSelected(false);
             }
 
             if (newValue != null) {
                 nameField.textProperty().bindBidirectional(newValue.name);
                 tagField.textProperty().bindBidirectional(newValue.tag);
                 queryField.textProperty().bindBidirectional(newValue.query);
+                ignoreSpendingCheckBox.selectedProperty().bindBidirectional(newValue.ignoreSpending);
             }
 
             tagCompletion.update();
@@ -109,6 +117,7 @@ public class ClassificationsView extends BakaTab {
         nameField.disableProperty().bind(disableInputs);
         tagField.disableProperty().bind(disableInputs);
         queryField.disableProperty().bind(disableInputs);
+        ignoreSpendingCheckBox.disableProperty().bind(disableInputs);
 
         final var details = new GridPane(5.0, 10.0);
         details.add(new Label("Name"), 0, 0);
@@ -117,6 +126,7 @@ public class ClassificationsView extends BakaTab {
         details.add(tagField.getNode(), 1, 1);
         details.add(new Label("Query"), 0, 2);
         details.add(queryField.getNode(), 1, 2);
+        details.add(ignoreSpendingCheckBox, 1, 3);
 
         final var newButton = new Button("New");
         newButton.setOnAction(_ -> {

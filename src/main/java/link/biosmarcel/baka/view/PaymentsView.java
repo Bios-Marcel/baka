@@ -31,7 +31,6 @@ import link.biosmarcel.baka.view.model.PaymentFX;
 
 import java.io.File;
 import java.math.BigDecimal;
-import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -92,7 +91,7 @@ public class PaymentsView extends BakaTab {
 
         importButton = new MenuButton("Import");
         final var classifyButton = new Button("Apply Classification Rules");
-        classifyButton.setOnAction(_ -> classifyAllUnclassified());
+        classifyButton.setOnAction(_ -> classifyAll());
 
         // Debug Feature for now, as I am not sure whether I want to easily allow this and this isn't optimised and
         // has a bad user experience.
@@ -157,25 +156,43 @@ public class PaymentsView extends BakaTab {
         setContent(layout);
     }
 
-    private void classifyAllUnclassified() {
+    private void classifyAll() {
         final var compiledRules = state.data.classificationRules.stream().map(ClassificationRule::compile).toList();
         for (final var payment : state.data.payments) {
-            if (!payment.classifications.isEmpty() || payment.amount.doubleValue() >= 0.0) {
+            // All fields updatable by classification are already set, nothing to do for now.
+            if(!payment.classifications.isEmpty() && payment.ignoreSpending) {
                 continue;
             }
 
             for (final var rule : compiledRules) {
+                boolean canTag = rule.tag != null && !rule.tag.isBlank() && payment.classifications.isEmpty();
+                // Rule would be a no-op anyway.
+                if(!canTag && !rule.ignoreSpending) {
+                    continue;
+                }
+
                 if (!rule.test(payment)) {
                     continue;
                 }
 
-                final var classification = new Classification();
-                classification.tag = rule.tag;
-                classification.amount = payment.amount;
-                payment.classifications.add(classification);
-                state.storer.store(payment.classifications);
-                state.storer.store(payment);
-                break;
+                // We only add the tag if no tags have been added yet.
+                if(canTag) {
+                    final var classification = new Classification();
+                    classification.tag = rule.tag;
+                    classification.amount = payment.amount;
+                    payment.classifications.add(classification);
+                    state.storer.store(payment.classifications);
+                }
+
+                if(rule.ignoreSpending) {
+                    payment.ignoreSpending = true;
+                    state.storer.store(payment);
+                }
+
+                // Payment is fully classified, no need to keep testing.
+                if (payment.ignoreSpending && !payment.classifications.isEmpty()) {
+                    break;
+                }
             }
         }
 

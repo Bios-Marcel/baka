@@ -1,6 +1,7 @@
 package link.biosmarcel.baka.view;
 
 import link.biosmarcel.baka.data.Payment;
+import org.jspecify.annotations.Nullable;
 
 import java.util.function.Predicate;
 
@@ -9,13 +10,19 @@ import java.util.function.Predicate;
  */
 public class CompiledClassificationRule {
     public final String name;
-    public final String tag;
+    public final @Nullable String tag;
+    public final boolean ignoreSpending;
     public final String query;
+
     private final Predicate<Payment> compiled;
 
-    public CompiledClassificationRule(final String name, final String tag, final String query) {
+    public CompiledClassificationRule(final String name,
+                                      final @Nullable String tag,
+                                      final boolean ignoreSpending,
+                                      final String query) {
         this.name = name;
         this.tag = tag;
+        this.ignoreSpending = ignoreSpending;
         this.query = query;
         this.compiled = compile();
     }

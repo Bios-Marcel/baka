@@ -38,6 +38,11 @@ public class Payment {
      */
     public @Nullable Payment cancelledOutBy;
 
+    /**
+     * For negative (outgoing) payments, this will make sure that the payment does not count as a spending.
+     */
+    public boolean ignoreSpending = false;
+
     public List<Classification> classifications = new ArrayList<>();
 
     public Payment(
