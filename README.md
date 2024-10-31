@@ -46,6 +46,14 @@ TODO
 The build system is provided with the code. While you could invoke a pre-installed `gradle`, it is recommended to
 use `./gradlew` instead, as this will get a specific gradle version, preventing compatibility issues.
 
+### Running
+
+The application can be run via gradle:
+
+```shell
+./gradlew run
+```
+
 ### Debug Mode
 
 The debug mode offers additional (potentially dangerous) features. It can be toggled via `Ctrl + Shift + D`.
