@@ -16,6 +16,7 @@ import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import link.biosmarcel.baka.ApplicationState;
+import link.biosmarcel.baka.bankimport.Importer;
 import link.biosmarcel.baka.data.Account;
 import link.biosmarcel.baka.data.Classification;
 import link.biosmarcel.baka.data.ClassificationRule;
@@ -205,14 +206,17 @@ public class PaymentsView extends BakaTab {
     private void createPayments(final Collection<Payment> newPayments) {
         // We simply append, preventing to restore everything (hopefully). We also won't depend on the sorting by
         // accident later on.
-        final var possibleDuplicates = state.data.importPayments(newPayments);
+        final var importSummary = Importer.importPayments(state.data, newPayments);
 
         // FIXME If we encounter duplicates, we show a dialog that allows marking relevant ones as non-duplicate, assigning
         //  them a random identifier.
-        if (!possibleDuplicates.isEmpty()) {
-            System.out.println("Possible dupes: " + possibleDuplicates.size());
-            // FIXME Do a reimport where the user can chose which to reimport.
-        }
+        System.out.printf("Import Summary:\n\tSuccessful: %d\n\tDupes: %d\n\tPossible Dupes: %d\n\tSkipped: %d\n",
+                importSummary.successful.size(),
+                importSummary.duplicates.size(),
+                importSummary.possibleDuplicates.size(),
+                importSummary.skipped.size()
+        );
+        // FIXME Do a reimport where the user can chose which to reimport.
 
         state.storer.store(state.data);
         state.storer.commit();
