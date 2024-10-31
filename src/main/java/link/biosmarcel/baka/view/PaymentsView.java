@@ -30,6 +30,7 @@ import link.biosmarcel.baka.view.model.PaymentFX;
 
 import java.io.File;
 import java.math.BigDecimal;
+import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -180,10 +181,23 @@ public class PaymentsView extends BakaTab {
     }
 
     private void importHandler(final Account account, final BiFunction<Account, File, List<Payment>> importer) {
-        final var file = new FileChooser().showOpenDialog(getTabPane().getScene().getWindow());
+        final FileChooser fileChooser = new FileChooser();
+        final var initialDir = state.data.convenienceState.importDirectories.get(account);
+        if (initialDir != null) {
+            fileChooser.setInitialDirectory(new File(initialDir));
+        } else if (state.data.convenienceState.lastImportPath != null) {
+            fileChooser.setInitialDirectory(new File(state.data.convenienceState.lastImportPath));
+        }
+        final var file = fileChooser.showOpenDialog(getTabPane().getScene().getWindow());
         if (file == null) {
             return;
         }
+
+        state.data.convenienceState.lastImportPath = file.getParent();
+        state.storer.store(state.data.convenienceState);
+        state.data.convenienceState.importDirectories.put(account, file.getParent());
+        state.storer.store(state.data.convenienceState.importDirectories);
+        state.storer.commit();
 
         createPayments(importer.apply(account, file));
     }
