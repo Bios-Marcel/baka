@@ -1,6 +1,9 @@
 package link.biosmarcel.baka.data;
 
+import org.jspecify.annotations.Nullable;
+
 import java.math.BigDecimal;
+import java.nio.file.Path;
 import java.util.*;
 
 /**
@@ -8,6 +11,8 @@ import java.util.*;
  * initialised once data is found. By default, such fields will be {@code null}.
  */
 public class Data {
+    public ConvenienceState convenienceState = new ConvenienceState();
+
     /**
      * A list of ALL payments. Sorted by {@link Payment#effectiveDate} descending.
      */
@@ -16,6 +21,27 @@ public class Data {
     public List<Account> accounts = new ArrayList<>();
 
     public List<ClassificationRule> classificationRules = new ArrayList<>();
+
+    /**
+     * Init makes sure all fields have their initial value if they aren't set yet. While this will happen correctly
+     * on first creation of the database, adding fields will require this.
+     */
+    @SuppressWarnings("ConstantValue")
+    public void init() {
+        if (convenienceState == null) {
+            convenienceState = new ConvenienceState();
+        }
+        convenienceState.init();
+        if (payments == null) {
+            payments = new ArrayList<>();
+        }
+        if (accounts == null) {
+            accounts = new ArrayList<>();
+        }
+        if (classificationRules == null) {
+            classificationRules = new ArrayList<>();
+        }
+    }
 
     /**
      * Import payments will add new payments to the data, if the data doesn't already exist.

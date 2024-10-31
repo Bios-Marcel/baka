@@ -18,6 +18,7 @@ import org.jspecify.annotations.Nullable;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.HashMap;
 import java.util.Objects;
 import java.util.Locale;
 
@@ -84,6 +85,8 @@ public class Main extends Application {
                 //})
                 .setRoot(data)
                 .start();
+
+        data.init();
 
         final ApplicationState state = new ApplicationState(storageManager, storageManager.createEagerStorer(), data);
         final DebugView debugView = new DebugView(state);
