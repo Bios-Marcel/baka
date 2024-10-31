@@ -208,15 +208,7 @@ public class PaymentsView extends BakaTab {
         // accident later on.
         final var importSummary = Importer.importPayments(state.data, newPayments);
 
-        // FIXME If we encounter duplicates, we show a dialog that allows marking relevant ones as non-duplicate, assigning
-        //  them a random identifier.
-        System.out.printf("Import Summary:\n\tSuccessful: %d\n\tDupes: %d\n\tPossible Dupes: %d\n\tSkipped: %d\n",
-                importSummary.successful.size(),
-                importSummary.duplicates.size(),
-                importSummary.possibleDuplicates.size(),
-                importSummary.skipped.size()
-        );
-        // FIXME Do a reimport where the user can chose which to reimport.
+        // FIXME Allow user to manually handle what to do with the "potential duplicates".
 
         state.storer.store(state.data);
         state.storer.commit();
@@ -224,6 +216,19 @@ public class PaymentsView extends BakaTab {
         data.setAll(convertPayments(state.data.payments));
         // Even with active sorting, the table won't sort automatically.
         table.sort();
+
+        final var summaryText = String.format("Successful: %d\nDuplicates: %d\nPossible Duplicates: %d\nSkipped: %d\n",
+                importSummary.successful.size(),
+                importSummary.duplicates.size(),
+                importSummary.possibleDuplicates.size(),
+                importSummary.skipped.size()
+        );
+        final var importSummaryAlert = new Alert(Alert.AlertType.INFORMATION);
+        importSummaryAlert.setTitle("Import done");
+        importSummaryAlert.setHeaderText("Import Summary");
+        importSummaryAlert.setContentText(summaryText);
+        importSummaryAlert.initOwner(table.getScene().getWindow());
+        importSummaryAlert.showAndWait();
     }
 
     private static List<PaymentFX> convertPayments(final Collection<Payment> payments) {
