@@ -7,6 +7,7 @@ import javafx.scene.control.DatePicker;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import link.biosmarcel.baka.ApplicationState;
+import link.biosmarcel.baka.bankimport.Importer;
 import link.biosmarcel.baka.data.Payment;
 import link.biosmarcel.baka.view.component.BakaTab;
 
@@ -54,8 +55,8 @@ public class DebugView extends BakaTab {
                 ));
             }
 
-            state.data.importPayments(payments);
-            state.storer.store(state.data);
+            Importer.importPayments(state.data, payments);
+            state.storer.store(state.data.payments);
             state.storer.commit();
         });
 
