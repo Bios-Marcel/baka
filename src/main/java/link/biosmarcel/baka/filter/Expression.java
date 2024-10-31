@@ -7,9 +7,9 @@ import java.util.function.Predicate;
 /**
  * Info:  a & b | c equals a & (b | c)
  *
- * @param <FilterTarget> Typ of the object we intend to test against
+ * @param <FilterTarget> Type of the object we intend to test against
  */
-public class Expression<FilterTarget> implements Predicate<FilterTarget> {
+class Expression<FilterTarget> implements Predicate<FilterTarget> {
     public Predicate<FilterTarget> predicate;
     public BinaryExpressionType binaryExpressionType;
     public @Nullable Predicate<FilterTarget> next;

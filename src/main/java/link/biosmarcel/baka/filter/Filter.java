@@ -15,12 +15,32 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
+/**
+ * Filter allows compiling and applying a query. The query can be applied on a single object by calling
+ * {@link #test(Object)}. Calling {@link #setQuery(String)} again will compile a new query.
+ *
+ * <p>
+ * Before the filter can be used however, you need to invoke
+ * {@link #register(String, Operator, FilterTargetPredicate, Function)} to specify which fields and operators
+ * can be used in which combinations.
+ * </p>
+ *
+ * @param <FilterTarget> Type of the element to run filter logic on
+ */
 @NullMarked
-public class Filter<FilterTarget> implements Predicate<FilterTarget> {
+public abstract class Filter<FilterTarget> implements Predicate<FilterTarget> {
     private @Nullable Expression<FilterTarget> query;
+    private final Map<String, Map<Operator, FieldData<FilterTarget, ?>>> fieldToOperatorToExtractor = new HashMap<>();
 
-    final Map<String, Map<Operator, FieldData<FilterTarget, ?>>> fieldToOperatorToExtractor = new HashMap<>();
-
+    /**
+     * Registers a new field for use in filtering, but only for a specific operator.
+     *
+     * @param field the field name to be used in the query
+     * @param operator the operator to be used in the query
+     * @param predicate the logic used for filtering the given field and operator combination
+     * @param convertString the logic used to convert the user input into a comparable value
+     * @param <ValueType> type of the field
+     */
     public <ValueType> void register(
             final String field,
             final Operator operator,
@@ -31,6 +51,16 @@ public class Filter<FilterTarget> implements Predicate<FilterTarget> {
                 .put(operator, new FieldData<>(predicate, convertString));
     }
 
+    /**
+     * Sets and compiles the given query. The {@link IncompleteQueryException} returned can be used for telling the
+     * user what the query is still missing. The query is always returned on the first error / missing thing
+     * encountered.
+     *
+     * @param textQuery query input
+     *
+     * @throws IncompleteQueryException if the query isn't complete, but does not contain any errors yet
+     * @throws IllegalStateException if the query isn't parsable, due to containing invalid input
+     */
     public void setQuery(final String textQuery) {
         final var lexer = new FilterLexer(CharStreams.fromString(textQuery));
         final var parser = new FilterParser(new CommonTokenStream(lexer));
@@ -174,6 +204,13 @@ public class Filter<FilterTarget> implements Predicate<FilterTarget> {
         query = root.get();
     }
 
+    /**
+     * Runs the filter against the given object.
+     *
+     * @param target element to test against
+     *
+     * @return {@code true} if there is no query or the object matches the query
+     */
     public boolean test(final FilterTarget target) {
         if (query == null) {
             return true;
