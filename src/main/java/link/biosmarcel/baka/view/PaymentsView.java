@@ -38,6 +38,7 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.function.BiFunction;
+import java.util.stream.Collectors;
 
 public class PaymentsView extends BakaTab {
     private final TableView<PaymentFX> table;
@@ -197,6 +198,10 @@ public class PaymentsView extends BakaTab {
             return;
         }
 
+        if (account.iban != null && !account.iban.isBlank() && safeguardIncorrectlyImportedFile(account, files)) {
+            return;
+        }
+
         // Since it's assumed we can only pick files from one directory, we use the next best parent dir we can find.
         final String dir = files.getFirst().getParent();
         state.data.convenienceState.lastImportPath = dir;
@@ -209,10 +214,39 @@ public class PaymentsView extends BakaTab {
         final var newPayments = files.stream()
                 .flatMap(file -> importer.apply(account, file).stream())
                 // Since the files usually have consistent order, we sort, as adding together two files contents may
-                // produces an incorrect order.
+                // produce an incorrect order.
                 .sorted(Comparator.comparing(payment -> payment.bookingDate))
                 .toList();
         createPayments(newPayments);
+    }
+
+    private boolean safeguardIncorrectlyImportedFile(Account account, List<File> files) {
+        final var potentiallyWrongImports = new ArrayList<String>();
+        for (final var file : files) {
+            for (final var otherAccount : state.data.accounts) {
+                if (account.equals(otherAccount) || otherAccount.iban == null || otherAccount.iban.isBlank()) {
+                    continue;
+                }
+
+                if (file.getName().toLowerCase().contains(otherAccount.iban.toLowerCase())) {
+                    potentiallyWrongImports.add(file.getName());
+                }
+            }
+        }
+
+        if (!potentiallyWrongImports.isEmpty()) {
+            final var safetyCheck = new Alert(Alert.AlertType.CONFIRMATION);
+            safetyCheck.setTitle("Import into '%s'".formatted(account.name));
+            safetyCheck.setHeaderText("Potentially importing into incorrect account");
+            safetyCheck.setContentText(
+                    "Are you sure you want to import the following files into account '%s (%s)':\n\n%s"
+                            .formatted(account.name, account.iban, String.join("\n", potentiallyWrongImports)));
+            safetyCheck.initOwner(getTabPane().getScene().getWindow());
+            safetyCheck.getDialogPane().setPrefWidth(600);
+            final var choice = safetyCheck.showAndWait();
+            return choice.isEmpty() || choice.get().getButtonData() != ButtonBar.ButtonData.YES;
+        }
+        return false;
     }
 
     private void createPayments(final Collection<Payment> newPayments) {
