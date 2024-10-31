@@ -26,7 +26,7 @@ class PaymentFilterTest {
         final var filter = new PaymentFilter();
 
         filter.setQuery("""
-                name="fred" and name="fred"
+                name = "fred" and name = "fred"
                 """);
         Assertions.assertTrue(filter.test(payment));
     }
@@ -77,62 +77,62 @@ class PaymentFilterTest {
         final var filter = new PaymentFilter();
 
         filter.setQuery("""
-                name="fred" AND name="fred"
+                name = "fred" AND name = "fred"
                 """);
         Assertions.assertTrue(filter.test(payment));
 
         filter.setQuery("""
-                name="fred" OR name="fred"
+                name = "fred" OR name = "fred"
                 """);
         Assertions.assertTrue(filter.test(payment));
 
         filter.setQuery("""
-                name="abc" OR name="fred"
+                name = "abc" OR name = "fred"
                 """);
         Assertions.assertTrue(filter.test(payment));
 
         filter.setQuery("""
-                name="fred" OR name="abc"
+                name = "fred" OR name = "abc"
                 """);
         Assertions.assertTrue(filter.test(payment));
 
         filter.setQuery("""
-                name="fred" AND name="abc"
+                name = "fred" AND name = "abc"
                 """);
         Assertions.assertFalse(filter.test(payment));
 
         filter.setQuery("""
-                name="fred" AND name="abc"
+                name = "fred" AND name = "abc"
                 """);
         Assertions.assertFalse(filter.test(payment));
 
         filter.setQuery("""
-                name="abc" AND name="deg"
+                name = "abc" AND name = "deg"
                 """);
         Assertions.assertFalse(filter.test(payment));
 
         filter.setQuery("""
-                name="abc" OR name="fred" AND name != "fred"
+                name = "abc" OR name = "fred" AND name != "fred"
                 """);
         Assertions.assertFalse(filter.test(payment));
 
         filter.setQuery("""
-                name="abc" OR name!="fred" OR name = "fred"
+                name = "abc" OR name != "fred" OR name = "fred"
                 """);
         Assertions.assertTrue(filter.test(payment));
 
         filter.setQuery("""
-                name="abc" OR name="fred" AND name = "abc"
+                name = "abc" OR name = "fred" AND name = "abc"
                 """);
         Assertions.assertFalse(filter.test(payment));
 
         filter.setQuery("""
-                name="fred" AND name="kek" OR name = "fred"
+                name = "fred" AND name = "kek" OR name = "fred"
                 """);
         Assertions.assertTrue(filter.test(payment));
 
         filter.setQuery("""
-                (name="fred" AND name="kek") OR name = "fred"
+                (name = "fred" AND name = "kek") OR name = "fred"
                 """);
         Assertions.assertTrue(filter.test(payment));
     }
