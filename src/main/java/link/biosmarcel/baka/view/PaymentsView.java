@@ -183,6 +183,7 @@ public class PaymentsView extends BakaTab {
 
     private void importHandler(final Account account, final BiFunction<Account, File, List<Payment>> importer) {
         final FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Import for account '%s'".formatted(account.name));
         final var initialDir = state.data.convenienceState.importDirectories.get(account);
         if (initialDir != null) {
             fileChooser.setInitialDirectory(new File(initialDir));
@@ -217,7 +218,7 @@ public class PaymentsView extends BakaTab {
         // Even with active sorting, the table won't sort automatically.
         table.sort();
 
-        final var summaryText = String.format("Successful: %d\nDuplicates: %d\nPossible Duplicates: %d\nSkipped: %d\n",
+        final var summaryText = "Successful: %d\nDuplicates: %d\nPossible Duplicates: %d\nSkipped: %d\n".formatted(
                 importSummary.successful.size(),
                 importSummary.duplicates.size(),
                 importSummary.possibleDuplicates.size(),
