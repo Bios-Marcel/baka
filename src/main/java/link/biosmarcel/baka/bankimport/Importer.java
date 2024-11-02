@@ -1,5 +1,6 @@
 package link.biosmarcel.baka.bankimport;
 
+import link.biosmarcel.baka.data.Classifier;
 import link.biosmarcel.baka.data.Data;
 import link.biosmarcel.baka.data.Payment;
 
@@ -43,10 +44,14 @@ public final class Importer {
     public static ImportSummary importPayments(
             final Data data,
             final Collection<Payment> newPayments) {
+        final var classifier = new Classifier(data.classificationRules);
         final var summary = new ImportSummary();
 
         OUTER_LOOP:
         for (final Payment newPayment : newPayments) {
+            // We classify everything for now, even duplicates and skipped payments.
+            classifier.classify(newPayment);
+
             // Banks sometimes add info payments at the end of the months. We don't want these for now.
             if (newPayment.amount.compareTo(BigDecimal.ZERO) == 0) {
                 summary.skipped.add(newPayment);
