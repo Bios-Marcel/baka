@@ -13,4 +13,10 @@ public class Classification {
      * could've spent 60€ on food and the other 40€ on weed.
      */
     public BigDecimal amount = BigDecimal.ZERO;
+
+    /**
+     * Classifications can be done automatically by specifying {@link ClassificationRule classification rules}.
+     * They can also be done manually though.
+     */
+    public boolean automated = false;
 }

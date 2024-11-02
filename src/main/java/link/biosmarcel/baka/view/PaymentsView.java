@@ -17,10 +17,7 @@ import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import link.biosmarcel.baka.ApplicationState;
 import link.biosmarcel.baka.bankimport.Importer;
-import link.biosmarcel.baka.data.Account;
-import link.biosmarcel.baka.data.Classification;
-import link.biosmarcel.baka.data.ClassificationRule;
-import link.biosmarcel.baka.data.Payment;
+import link.biosmarcel.baka.data.*;
 import link.biosmarcel.baka.filter.FilterAutocompleteGenerator;
 import link.biosmarcel.baka.filter.IncompleteQueryException;
 import link.biosmarcel.baka.view.component.AutocompleteField;
@@ -31,21 +28,19 @@ import link.biosmarcel.baka.view.model.PaymentFX;
 
 import java.io.File;
 import java.math.BigDecimal;
-import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.function.BiFunction;
-import java.util.stream.Collectors;
 
 public class PaymentsView extends BakaTab {
     private final TableView<PaymentFX> table;
     private final PaymentDetails details;
     private final MenuButton importButton;
-    private final ObservableList<PaymentFX> data = FXCollections.observableArrayList();
-    private final FilteredList<PaymentFX> filteredData = new FilteredList<>(data);
+    private final ObservableList<PaymentFX> payments = FXCollections.observableArrayList();
+    private final FilteredList<PaymentFX> filteredData = new FilteredList<>(payments);
     private final TagCompletion tagCompletion;
 
     public PaymentsView(ApplicationState state) {
@@ -105,7 +100,7 @@ public class PaymentsView extends BakaTab {
             state.storer.store(state.data);
             state.storer.commit();
 
-            data.setAll(convertPayments(state.data.payments));
+            payments.setAll(convertPayments(state.data.payments));
             table.sort();
         });
 
@@ -159,28 +154,15 @@ public class PaymentsView extends BakaTab {
     }
 
     private void classifyAllUnclassified() {
-        final var compiledRules = state.data.classificationRules.stream().map(ClassificationRule::compile).toList();
+        final var classifier = new Classifier(state.data.classificationRules);
         for (final var payment : state.data.payments) {
-            if (!payment.classifications.isEmpty() || payment.amount.doubleValue() >= 0.0) {
-                continue;
-            }
-
-            for (final var rule : compiledRules) {
-                if (!rule.test(payment)) {
-                    continue;
-                }
-
-                final var classification = new Classification();
-                classification.tag = rule.tag;
-                classification.amount = payment.amount;
-                payment.classifications.add(classification);
+            if(classifier.classify(payment)) {
                 state.storer.store(payment.classifications);
-                state.storer.store(payment);
-                break;
             }
         }
 
-        data.setAll(convertPayments(state.data.payments));
+        state.storer.commit();
+        payments.setAll(convertPayments(state.data.payments));
     }
 
     private void importHandler(final Account account, final BiFunction<Account, File, List<Payment>> importer) {
@@ -259,7 +241,7 @@ public class PaymentsView extends BakaTab {
         state.storer.store(state.data);
         state.storer.commit();
         // We call setALl, as we aren't aware of what was filtered.
-        data.setAll(convertPayments(state.data.payments));
+        payments.setAll(convertPayments(state.data.payments));
         // Even with active sorting, the table won't sort automatically.
         table.sort();
 
@@ -287,7 +269,7 @@ public class PaymentsView extends BakaTab {
 
     @Override
     public void onTabActivated() {
-        data.setAll(convertPayments(state.data.payments));
+        payments.setAll(convertPayments(state.data.payments));
         table.sort();
         tagCompletion.update();
 
@@ -311,7 +293,7 @@ public class PaymentsView extends BakaTab {
     public void onTabDeactivated() {
         details.activePayment.unbind();
 
-        data.clear();
+        payments.clear();
         importButton.getItems().clear();
     }
 
